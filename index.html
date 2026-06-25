@@ -131,6 +131,16 @@
         <span class="nm" style="font-weight:700">مقترح بناءً على مواقع إكسترا</span>
         <span class="ct" id="ct-extraintel">0</span><span class="sw"></span>
       </div>
+      <div class="layer off" data-layer="demographics" style="border-color:#6d28d9;background:#f5f0fc">
+        <span class="dot" style="background:#6d28d9;border-radius:3px"></span>
+        <span class="nm" style="font-weight:700">بيانات الأحياء (سكان/دخل)</span>
+        <span class="ct" id="ct-demographics">0</span><span class="sw"></span>
+      </div>
+      <div class="layer" data-layer="income" style="border-color:#0e7490;background:#eefafd">
+        <span class="dot" style="background:#fff;border:3px solid #0e7490;border-radius:50%"></span>
+        <span class="nm" style="font-weight:700">مقترح: الأعلى دخلاً وسعوديين</span>
+        <span class="ct" id="ct-income">0</span><span class="sw"></span>
+      </div>
     </div>
 
     <div class="section">
@@ -143,6 +153,12 @@
       <h2>مقترح بناءً على مواقع إكسترا</h2>
       <p class="note" style="margin-bottom:8px">مبني على فروع إكسترا في الرياض. درجة الفرصة = <b>قوة إكسترا</b> (عدد الفروع + المراجعات) <b>×</b> <b>ندرة خدمة درايف7</b>. نعرض البقع التي يبعد عنها درايف7 <b>≥2.5كم</b>.</p>
       <div id="eri-list"></div>
+    </div>
+
+    <div class="section">
+      <h2>مقترح: الأعلى دخلاً وعدد السعوديين</h2>
+      <p class="note" style="margin-bottom:8px">درجة الفرصة = <b>مؤشر الدخل</b> (متوسط الرواتب) <b>×</b> <b>عدد السكان السعوديين</b> في الحي. نعرض الأحياء التي يبعد عنها درايف7 <b>≥2.5كم</b>. (شغّل طبقة «بيانات الأحياء» لرؤية الأرقام الكاملة على الخريطة).</p>
+      <div id="inc-list"></div>
     </div>
 
     <div class="section">
@@ -227,6 +243,8 @@
 <script type="application/json" id="data-sbintel">{"layer": "starbucks_intel", "basis": "DENSITY on official Starbucks list (185 branches; airport excluded). Clusters=Starbucks within 1.5km. Score=branch_count × service-gap(nd/3, cap 3x). Opportunities=nearest Drive7>=2.5km. reviews_known = pooled reviews where coords matched prior data.", "params": {"cluster_km": 1.5, "min_gap_km": 2.5, "metric": "branch_count × gap"}, "generated_at": "2026-06-25", "sites": [{"hood": "العليا", "lat": 24.70132, "lng": 46.68035, "n": 19, "nd": 6.94, "reviews_known": 1588, "score": 43.97, "rank": 1}, {"hood": "الملك فهد", "lat": 24.75623, "lng": 46.68958, "n": 15, "nd": 3.53, "reviews_known": 5466, "score": 17.63, "rank": 2}, {"hood": "الخليج", "lat": 24.79394, "lng": 46.81097, "n": 4, "nd": 7.0, "reviews_known": 110, "score": 9.34, "rank": 3}, {"hood": "الربوة", "lat": 24.69005, "lng": 46.76693, "n": 6, "nd": 4.1, "reviews_known": 491, "score": 8.2, "rank": 4}, {"hood": "السويدي", "lat": 24.59835, "lng": 46.6961, "n": 3, "nd": 8.08, "reviews_known": 600, "score": 8.08, "rank": 5}, {"hood": "الخليج", "lat": 24.81555, "lng": 46.87802, "n": 2, "nd": 12.57, "reviews_known": null, "score": 6.0, "rank": 6}, {"hood": "عرقة", "lat": 24.67448, "lng": 46.62401, "n": 2, "nd": 7.83, "reviews_known": null, "score": 5.22, "rank": 7}, {"hood": "الحمراء", "lat": 24.76943, "lng": 46.76729, "n": 6, "nd": 2.54, "reviews_known": 2716, "score": 5.08, "rank": 8}, {"hood": "بدر", "lat": 24.54157, "lng": 46.69421, "n": 2, "nd": 7.48, "reviews_known": 972, "score": 4.99, "rank": 9}, {"hood": "شبرا", "lat": 24.57219, "lng": 46.6704, "n": 3, "nd": 4.66, "reviews_known": 2137, "score": 4.66, "rank": 10}, {"hood": "اشبيلية", "lat": 24.81247, "lng": 46.80419, "n": 2, "nd": 6.67, "reviews_known": 1604, "score": 4.45, "rank": 11}, {"hood": "النهضة", "lat": 24.75433, "lng": 46.82272, "n": 3, "nd": 3.83, "reviews_known": 3660, "score": 3.83, "rank": 12}, {"hood": "الياسمين", "lat": 24.81068, "lng": 46.66519, "n": 3, "nd": 3.12, "reviews_known": 2111, "score": 3.12, "rank": 13}, {"hood": "المونسية", "lat": 24.84283, "lng": 46.75265, "n": 2, "nd": 4.55, "reviews_known": 2438, "score": 3.03, "rank": 14}, {"hood": "المنصورة", "lat": 24.60416, "lng": 46.7325, "n": 1, "nd": 11.7, "reviews_known": null, "score": 3.0, "rank": 15}, {"hood": "المربع", "lat": 24.66391, "lng": 46.68321, "n": 1, "nd": 10.71, "reviews_known": null, "score": 3.0, "rank": 16}, {"hood": "الديرة", "lat": 24.62869, "lng": 46.71042, "n": 1, "nd": 11.16, "reviews_known": null, "score": 3.0, "rank": 17}, {"hood": "المنصورة", "lat": 24.58618, "lng": 46.75911, "n": 1, "nd": 13.76, "reviews_known": null, "score": 3.0, "rank": 18}, {"hood": "العليا", "lat": 24.67435, "lng": 46.66855, "n": 1, "nd": 9.09, "reviews_known": null, "score": 3.0, "rank": 19}, {"hood": "العزيزية", "lat": 24.61109, "lng": 46.70745, "n": 1, "nd": 9.78, "reviews_known": null, "score": 3.0, "rank": 20}, {"hood": "المربع", "lat": 24.64617, "lng": 46.7034, "n": 1, "nd": 11.68, "reviews_known": 1095, "score": 3.0, "rank": 21}, {"hood": "العريجاء", "lat": 24.63123, "lng": 46.56409, "n": 1, "nd": 9.58, "reviews_known": 883, "score": 3.0, "rank": 22}]}</script>
 <script type="application/json" id="data-jaririntel">{"layer": "jarir_intel", "basis": "Jarir opportunity = (branch count + reviews/3000) × service-gap(nd/3, cap 3x). Clusters = Jarir within 2km. Opportunities = nearest Drive7 >= 2.5km.", "params": {"cluster_km": 2.0, "min_gap_km": 2.5}, "generated_at": "2026-06-25", "sites": [{"hood": "العليا", "lat": 24.70181, "lng": 46.68069, "n": 1, "nd": 6.92, "reviews_known": 4412, "score": 5.7, "rank": 1}, {"hood": "النهضة", "lat": 24.75826, "lng": 46.83034, "n": 1, "nd": 4.71, "reviews_known": 5761, "score": 4.58, "rank": 2}, {"hood": "الديرة", "lat": 24.63237, "lng": 46.70711, "n": 1, "nd": 11.17, "reviews_known": 805, "score": 3.8, "rank": 3}, {"hood": "المنصورة", "lat": 24.59997, "lng": 46.7467, "n": 1, "nd": 12.9, "reviews_known": 513, "score": 3.51, "rank": 4}, {"hood": "الخليج", "lat": 24.79001, "lng": 46.80844, "n": 1, "nd": 6.52, "reviews_known": 1372, "score": 3.17, "rank": 5}, {"hood": "العارض", "lat": 24.87249, "lng": 46.63791, "n": 1, "nd": 7.01, "reviews_known": 1069, "score": 3.17, "rank": 6}, {"hood": "شبرا", "lat": 24.56935, "lng": 46.66234, "n": 1, "nd": 3.81, "reviews_known": 4308, "score": 3.09, "rank": 7}, {"hood": "السويدي", "lat": 24.60829, "lng": 46.65519, "n": 1, "nd": 5.68, "reviews_known": 1535, "score": 2.86, "rank": 8}, {"hood": "النرجس", "lat": 24.81789, "lng": 46.68606, "n": 1, "nd": 3.44, "reviews_known": 3125, "score": 2.34, "rank": 9}, {"hood": "الربوة", "lat": 24.69167, "lng": 46.76578, "n": 1, "nd": 3.97, "reviews_known": 2223, "score": 2.3, "rank": 10}, {"hood": "الملك فهد", "lat": 24.74472, "lng": 46.67952, "n": 1, "nd": 4.06, "reviews_known": 1653, "score": 2.1, "rank": 11}, {"hood": "حطين", "lat": 24.75198, "lng": 46.58395, "n": 1, "nd": 3.81, "reviews_known": 1729, "score": 2.0, "rank": 12}, {"hood": "الروضة", "lat": 24.73164, "lng": 46.75452, "n": 1, "nd": 2.65, "reviews_known": 717, "score": 1.09, "rank": 13}]}</script>
 <script type="application/json" id="data-extraintel">{"layer": "extra_intel", "basis": "eXtra opportunity = (branch count + reviews/5000) × service-gap(nd/3, cap 3x). Clusters=eXtra within 2.5km. Opportunities=nearest Drive7>=2.5km.", "params": {"cluster_km": 2.5, "min_gap_km": 2.5}, "generated_at": "2026-06-25", "sites": [{"hood": "العزيزية", "lat": 24.60512, "lng": 46.70545, "n": 1, "nd": 9.27, "reviews_known": 8611, "score": 8.17, "rank": 1}, {"hood": "حي الملك سلمان", "lat": 24.72826, "lng": 46.68989, "n": 1, "nd": 5.67, "reviews_known": 13997, "score": 7.19, "rank": 2}, {"hood": "الفاروق", "lat": 24.66315, "lng": 46.78605, "n": 1, "nd": 6.91, "reviews_known": 10386, "score": 7.09, "rank": 3}, {"hood": "بدر", "lat": 24.5484, "lng": 46.69675, "n": 1, "nd": 7.49, "reviews_known": 771, "score": 2.88, "rank": 4}, {"hood": "الرائد", "lat": 24.71294, "lng": 46.63303, "n": 1, "nd": 3.75, "reviews_known": 4847, "score": 2.46, "rank": 5}, {"hood": "الربيع", "lat": 24.80665, "lng": 46.66301, "n": 1, "nd": 2.89, "reviews_known": 6984, "score": 2.31, "rank": 6}, {"hood": "الغدير", "lat": 24.76682, "lng": 46.65902, "n": 1, "nd": 2.52, "reviews_known": 957, "score": 1.0, "rank": 7}]}</script>
+<script type="application/json" id="data-demographics">{"layer": "demographics", "source": "بيانات مقدّمة من المستخدم (السكان بالآلاف، الرواتب بالآلاف ريال)", "collected_at": "2026-06-25", "note": "lat/lng = مركز تقريبي للحي مشتق من بيانات المشروع.", "districts": [{"hood": "قرطبة", "pop": 81.1, "saudi_pct": 72.9, "salary_m": 14.9, "salary_f": 10.3, "lat": 24.8039239, "lng": 46.7387926}, {"hood": "حطين", "pop": 25.6, "saudi_pct": 82.0, "salary_m": 16.6, "salary_f": 11.7, "lat": 24.7531614, "lng": 46.6257948}, {"hood": "المحمدية", "pop": 17.3, "saudi_pct": 84.9, "salary_m": 21.3, "salary_f": 15.6, "lat": 24.7428447, "lng": 46.6558622}, {"hood": "القيروان", "pop": 17.8, "saudi_pct": 75.7, "salary_m": 12.8, "salary_f": 13.3, "lat": 24.8244637, "lng": 46.5929344}, {"hood": "النرجس", "pop": 27.6, "saudi_pct": 79.9, "salary_m": 14.0, "salary_f": 10.0, "lat": 24.8178879, "lng": 46.686057}, {"hood": "العقيق", "pop": 55.5, "saudi_pct": 75.4, "salary_m": 11.6, "salary_f": 8.5, "lat": 24.7867621, "lng": 46.6147681}, {"hood": "الياسمين", "pop": 103.1, "saudi_pct": 74.9, "salary_m": 15.8, "salary_f": 10.2, "lat": 24.81446, "lng": 46.6525367}, {"hood": "السليمانية/العليا", "pop": 75.3, "saudi_pct": 29.9, "salary_m": 16.2, "salary_f": 10.9, "lat": 24.7018094, "lng": 46.6806913}, {"hood": "العارض", "pop": 34.3, "saudi_pct": 87.2, "salary_m": 15.1, "salary_f": 7.5, "lat": 24.8460553, "lng": 46.6303434}, {"hood": "الملقا", "pop": 61.2, "saudi_pct": 77.1, "salary_m": 17.7, "salary_f": 11.6, "lat": 24.8087235, "lng": 46.6201819}, {"hood": "اليرموك", "pop": 76.9, "saudi_pct": 84.2, "salary_m": 11.9, "salary_f": 9.59, "lat": 24.8147692, "lng": 46.7766282}, {"hood": "النزهة", "pop": 29.3, "saudi_pct": 62.3, "salary_m": 11.6, "salary_f": 6.029, "lat": 24.770464, "lng": 46.727518}, {"hood": "المصيف", "pop": 56.0, "saudi_pct": 63.8, "salary_m": 10.6, "salary_f": 5.81, "lat": 24.7748819, "lng": 46.6818539}, {"hood": "عرقة", "pop": 22.8, "saudi_pct": 63.9, "salary_m": 9.379, "salary_f": 6.584, "lat": 24.6864056, "lng": 46.5826153}, {"hood": "ظهرة لبن", "pop": 131.1, "saudi_pct": 76.6, "salary_m": 7.9, "salary_f": null, "lat": 24.6356818, "lng": 46.5608664}]}</script>
+<script type="application/json" id="data-income">{"layer": "income_intel", "basis": "Opportunity = income index (avg salary) × Saudi residents (pop×saudi%). Excludes districts with Drive7 within 2.5km.", "params": {"min_gap_km": 2.5}, "generated_at": "2026-06-25", "sites": [{"hood": "الياسمين", "lat": 24.81446, "lng": 46.6525367, "pop": 103.1, "saudi_pct": 74.9, "saudi_count": 77.2, "income": 13.0, "nd": 3.33, "score": 1003.9, "rank": 1}, {"hood": "ظهرة لبن", "lat": 24.6356818, "lng": 46.5608664, "pop": 131.1, "saudi_pct": 76.6, "saudi_count": 100.4, "income": 7.9, "nd": 10.17, "score": 793.3, "rank": 2}, {"hood": "اليرموك", "lat": 24.8147692, "lng": 46.7766282, "pop": 76.9, "saudi_pct": 84.2, "saudi_count": 64.7, "income": 10.7, "nd": 4.0, "score": 695.7, "rank": 3}, {"hood": "العارض", "lat": 24.8460553, "lng": 46.6303434, "pop": 34.3, "saudi_pct": 87.2, "saudi_count": 29.9, "income": 11.3, "nd": 4.28, "score": 338.0, "rank": 4}, {"hood": "السليمانية/العليا", "lat": 24.7018094, "lng": 46.6806913, "pop": 75.3, "saudi_pct": 29.9, "saudi_count": 22.5, "income": 13.6, "nd": 6.92, "score": 305.1, "rank": 5}, {"hood": "النرجس", "lat": 24.8178879, "lng": 46.686057, "pop": 27.6, "saudi_pct": 79.9, "saudi_count": 22.1, "income": 12.0, "nd": 3.44, "score": 264.6, "rank": 6}, {"hood": "عرقة", "lat": 24.6864056, "lng": 46.5826153, "pop": 22.8, "saudi_pct": 63.9, "saudi_count": 14.6, "income": 8.0, "nd": 7.55, "score": 116.3, "rank": 7}]}</script>
 <script>
 "use strict";
 (function(){
@@ -240,6 +258,8 @@
   var siData = parse('data-sbintel') || {sites:[]};
   var jiData = parse('data-jaririntel') || {sites:[]};
   var eiData = parse('data-extraintel') || {sites:[]};
+  var demoData = parse('data-demographics') || {districts:[]};
+  var incData = parse('data-income') || {sites:[]};
   var branches = bData.branches || [];
   var competitors = cData.competitors || [];
   var refbrands = rData.brands || [];
@@ -248,6 +268,8 @@
   var sbIntel = siData.sites || [];
   var jarirIntel = jiData.sites || [];
   var extraIntel = eiData.sites || [];
+  var demographics = demoData.districts || [];
+  var incomeIntel = incData.sites || [];
   var confirmed = branches.filter(function(b){return b.status==='confirmed';});
   var verify    = branches.filter(function(b){return b.status!=='confirmed';});
 
@@ -271,6 +293,8 @@
   setText('ct-sbintel', fmt(sbIntel.length));
   setText('ct-jaririntel', fmt(jarirIntel.length));
   setText('ct-extraintel', fmt(extraIntel.length));
+  setText('ct-demographics', fmt(demographics.length));
+  setText('ct-income', fmt(incomeIntel.length));
 
   // Jarir-intel ranked list
   (function(){
@@ -296,6 +320,20 @@
         '<div class="h">'+s.hood+'</div>'+
         '<div class="m">إكسترا: '+s.n+' فرع'+(s.reviews_known?(' · '+fmt(s.reviews_known)+' مراجعة'):'')+' · أقرب درايف7: '+s.nd+' كم</div>'+
         '</div><span class="sc" style="color:#d99100">'+s.score+'</span>';
+      box.appendChild(div);
+    });
+  })();
+
+  // Income-intel ranked list
+  (function(){
+    var box=document.getElementById('inc-list'); if(!box) return;
+    incomeIntel.forEach(function(s){
+      var div=document.createElement('div'); div.className='sugg';
+      div.style.background='#eefafd'; div.style.borderColor='#b5e3ee';
+      div.innerHTML='<span class="rk" style="background:#0e7490">'+s.rank+'</span><div class="info">'+
+        '<div class="h">'+s.hood+'</div>'+
+        '<div class="m">سكان: '+s.pop+' ألف · سعوديون: '+s.saudi_pct+'% · دخل: '+s.income+' · أقرب درايف7: '+s.nd+' كم</div>'+
+        '</div><span class="sc" style="color:#0e7490">'+s.score+'</span>';
       box.appendChild(div);
     });
   })();
@@ -388,6 +426,17 @@
     layers.sbintel=L.layerGroup();
     layers.jaririntel=L.layerGroup();
     layers.extraintel=L.layerGroup();
+    layers.demographics=L.layerGroup();
+    layers.income=L.layerGroup();
+    function incIcon(rank){
+      var html='<div style="position:relative;width:32px;height:32px">'+
+        '<div style="position:absolute;inset:0;border-radius:50%;background:#0e7490;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.5)"></div>'+
+        '<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px">'+rank+'</span></div>';
+      return L.divIcon({className:'',html:html,iconSize:[32,32],iconAnchor:[16,16],popupAnchor:[0,-16]});
+    }
+    function demoIcon(){
+      return L.divIcon({className:'',html:'<div style="width:11px;height:11px;background:#6d28d9;border:2px solid #fff;border-radius:2px;box-shadow:0 1px 3px rgba(0,0,0,.4)"></div>',iconSize:[11,11],iconAnchor:[6,6],popupAnchor:[0,-6]});
+    }
     function exIcon(rank){
       var html='<div style="position:relative;width:32px;height:32px">'+
         '<div style="position:absolute;inset:0;border-radius:50%;background:#f2b417;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.5)"></div>'+
@@ -539,6 +588,28 @@
         '</div>'
       ).addTo(layers.extraintel);
     });
+    demographics.forEach(function(d){
+      var fSal=(d.salary_f!=null)?(d.salary_f+' ألف'):'—';
+      L.marker([d.lat,d.lng],{icon:demoIcon()}).bindPopup(
+        '<div class="pop"><h3>'+d.hood+'</h3>'+
+        '<div class="row">عدد السكان: <b>'+d.pop+' ألف</b></div>'+
+        '<div class="row">نسبة السعوديين: <b>'+d.saudi_pct+'%</b></div>'+
+        '<div class="row">متوسط رواتب الذكور: <b>'+d.salary_m+' ألف</b></div>'+
+        '<div class="row">متوسط رواتب الإناث: <b>'+fSal+'</b></div>'+
+        '</div>'
+      ).addTo(layers.demographics);
+    });
+    incomeIntel.forEach(function(s){
+      L.marker([s.lat,s.lng],{icon:incIcon(s.rank),zIndexOffset:1030}).bindPopup(
+        '<div class="pop"><h3>مقترح (دخل/سعوديون) #'+s.rank+' — '+s.hood+'</h3>'+
+        '<div class="row">درجة الفرصة: <b style="color:#0e7490">'+s.score+'</b></div>'+
+        '<div class="row">عدد السكان: <b>'+s.pop+' ألف</b> · سعوديون: <b>'+s.saudi_pct+'%</b></div>'+
+        '<div class="row">مؤشر الدخل: <b>'+s.income+' ألف</b></div>'+
+        '<div class="row">أقرب فرع درايف7: <b>'+s.nd+' كم</b> (فجوة خدمة)</div>'+
+        '<div class="row" style="margin-top:5px;color:#0e7490">القراءة: دخل مرتفع وكثافة سعودية عالية ودرايف7 بعيد — فرصة قوية.</div>'+
+        '</div>'
+      ).addTo(layers.income);
+    });
 
     layers.starbucks.addTo(map); layers.jarir.addTo(map); layers.extra.addTo(map);
     layers.suggested.addTo(map);
@@ -546,6 +617,7 @@
     layers.sbintel.addTo(map);
     layers.jaririntel.addTo(map);
     layers.extraintel.addTo(map);
+    layers.income.addTo(map);
     function fix(){ try{map.invalidateSize();}catch(e){} }
     setTimeout(fix,300); window.addEventListener('resize',fix);
   }
