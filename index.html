@@ -141,6 +141,12 @@
         <span class="nm" style="font-weight:700">مقترح: الأعلى دخلاً وسعوديين</span>
         <span class="ct" id="ct-income">0</span><span class="sw"></span>
       </div>
+      <div class="layer" data-layer="peak" style="border-color:#be123c;background:#fff1f3">
+        <span class="dot" style="background:#fff;border:3px solid #be123c;border-radius:50%"></span>
+        <span class="nm" style="font-weight:700">تحليل زمن الوصول في الذروة</span>
+        <span class="ct" id="ct-peak">0</span><span class="sw"></span>
+      </div>
+      <div class="layer" data-layer="peak20" style="border-color:#7c2d12;background:#fff7ed"><span class="dot" style="background:#fff;border:3px solid #7c2d12;border-radius:50%"></span><span class="nm" style="font-weight:700">تحليل زمن الوصول في الذروة (20 موقع)</span><span class="ct" id="ct-peak20">0</span><span class="sw"></span></div>
     </div>
 
     <div class="section">
@@ -160,6 +166,14 @@
       <p class="note" style="margin-bottom:8px">درجة الفرصة = <b>مؤشر الدخل</b> (متوسط الرواتب) <b>×</b> <b>عدد السكان السعوديين</b> في الحي. نعرض الأحياء التي يبعد عنها درايف7 <b>≥2.5كم</b>. (شغّل طبقة «بيانات الأحياء» لرؤية الأرقام الكاملة على الخريطة).</p>
       <div id="inc-list"></div>
     </div>
+
+    <div class="section">
+      <h2>تحليل زمن الوصول في الذروة</h2>
+      <p class="note" style="margin-bottom:8px"><b>أيام الأسبوع (الأحد–الخميس)</b> في الذروة. زمن القيادة الفعلي من موقع العميل إلى أقرب درايف7 (لا المسافة). أكثر من <b>30 دقيقة</b> = غير مخدوم. <b style="color:#be123c">الأرقام تقديرية</b> لا من Google Routes الحية.</p>
+      <div id="peak-list"></div>
+    </div>
+
+    <div class="section"><h2>تحليل زمن الوصول في الذروة (20 موقع)</h2><p class="note" style="margin-bottom:8px">نفس معادلة الفلتر السابق، قاعدة طلب أوسع لإظهار <b>20 موقعاً</b> غير مخدوم (&gt;30 دقيقة). <b style="color:#7c2d12">تقديري</b>.</p><div id="peak20-list"></div></div>
 
     <div class="section">
       <h2>☕ مقترح بعقلية ستاربكس</h2>
@@ -245,6 +259,8 @@
 <script type="application/json" id="data-extraintel">{"layer": "extra_intel", "basis": "eXtra opportunity = (branch count + reviews/5000) × service-gap(nd/3, cap 3x). Clusters=eXtra within 2.5km. Opportunities=nearest Drive7>=2.5km.", "params": {"cluster_km": 2.5, "min_gap_km": 2.5}, "generated_at": "2026-06-25", "sites": [{"hood": "العزيزية", "lat": 24.60512, "lng": 46.70545, "n": 1, "nd": 9.27, "reviews_known": 8611, "score": 8.17, "rank": 1}, {"hood": "حي الملك سلمان", "lat": 24.72826, "lng": 46.68989, "n": 1, "nd": 5.67, "reviews_known": 13997, "score": 7.19, "rank": 2}, {"hood": "الفاروق", "lat": 24.66315, "lng": 46.78605, "n": 1, "nd": 6.91, "reviews_known": 10386, "score": 7.09, "rank": 3}, {"hood": "بدر", "lat": 24.5484, "lng": 46.69675, "n": 1, "nd": 7.49, "reviews_known": 771, "score": 2.88, "rank": 4}, {"hood": "الرائد", "lat": 24.71294, "lng": 46.63303, "n": 1, "nd": 3.75, "reviews_known": 4847, "score": 2.46, "rank": 5}, {"hood": "الربيع", "lat": 24.80665, "lng": 46.66301, "n": 1, "nd": 2.89, "reviews_known": 6984, "score": 2.31, "rank": 6}, {"hood": "الغدير", "lat": 24.76682, "lng": 46.65902, "n": 1, "nd": 2.52, "reviews_known": 957, "score": 1.0, "rank": 7}]}</script>
 <script type="application/json" id="data-demographics">{"layer": "demographics", "source": "بيانات مقدّمة من المستخدم (السكان بالآلاف، الرواتب بالآلاف ريال)", "collected_at": "2026-06-25", "note": "lat/lng = مركز تقريبي للحي مشتق من بيانات المشروع.", "districts": [{"hood": "قرطبة", "pop": 81.1, "saudi_pct": 72.9, "salary_m": 14.9, "salary_f": 10.3, "lat": 24.8039239, "lng": 46.7387926}, {"hood": "حطين", "pop": 25.6, "saudi_pct": 82.0, "salary_m": 16.6, "salary_f": 11.7, "lat": 24.7531614, "lng": 46.6257948}, {"hood": "المحمدية", "pop": 17.3, "saudi_pct": 84.9, "salary_m": 21.3, "salary_f": 15.6, "lat": 24.7428447, "lng": 46.6558622}, {"hood": "القيروان", "pop": 17.8, "saudi_pct": 75.7, "salary_m": 12.8, "salary_f": 13.3, "lat": 24.8244637, "lng": 46.5929344}, {"hood": "النرجس", "pop": 27.6, "saudi_pct": 79.9, "salary_m": 14.0, "salary_f": 10.0, "lat": 24.8178879, "lng": 46.686057}, {"hood": "العقيق", "pop": 55.5, "saudi_pct": 75.4, "salary_m": 11.6, "salary_f": 8.5, "lat": 24.7867621, "lng": 46.6147681}, {"hood": "الياسمين", "pop": 103.1, "saudi_pct": 74.9, "salary_m": 15.8, "salary_f": 10.2, "lat": 24.81446, "lng": 46.6525367}, {"hood": "السليمانية/العليا", "pop": 75.3, "saudi_pct": 29.9, "salary_m": 16.2, "salary_f": 10.9, "lat": 24.7018094, "lng": 46.6806913}, {"hood": "العارض", "pop": 34.3, "saudi_pct": 87.2, "salary_m": 15.1, "salary_f": 7.5, "lat": 24.8460553, "lng": 46.6303434}, {"hood": "الملقا", "pop": 61.2, "saudi_pct": 77.1, "salary_m": 17.7, "salary_f": 11.6, "lat": 24.8087235, "lng": 46.6201819}, {"hood": "اليرموك", "pop": 76.9, "saudi_pct": 84.2, "salary_m": 11.9, "salary_f": 9.59, "lat": 24.8147692, "lng": 46.7766282}, {"hood": "النزهة", "pop": 29.3, "saudi_pct": 62.3, "salary_m": 11.6, "salary_f": 6.029, "lat": 24.770464, "lng": 46.727518}, {"hood": "المصيف", "pop": 56.0, "saudi_pct": 63.8, "salary_m": 10.6, "salary_f": 5.81, "lat": 24.7748819, "lng": 46.6818539}, {"hood": "عرقة", "pop": 22.8, "saudi_pct": 63.9, "salary_m": 9.379, "salary_f": 6.584, "lat": 24.6864056, "lng": 46.5826153}, {"hood": "ظهرة لبن", "pop": 131.1, "saudi_pct": 76.6, "salary_m": 7.9, "salary_f": null, "lat": 24.6356818, "lng": 46.5608664}]}</script>
 <script type="application/json" id="data-income">{"layer": "income_intel", "basis": "Opportunity = income index (avg salary) × Saudi residents (pop×saudi%). Excludes districts with Drive7 within 2.5km.", "params": {"min_gap_km": 2.5}, "generated_at": "2026-06-25", "sites": [{"hood": "الياسمين", "lat": 24.81446, "lng": 46.6525367, "pop": 103.1, "saudi_pct": 74.9, "saudi_count": 77.2, "income": 13.0, "nd": 3.33, "score": 1003.9, "rank": 1}, {"hood": "ظهرة لبن", "lat": 24.6356818, "lng": 46.5608664, "pop": 131.1, "saudi_pct": 76.6, "saudi_count": 100.4, "income": 7.9, "nd": 10.17, "score": 793.3, "rank": 2}, {"hood": "اليرموك", "lat": 24.8147692, "lng": 46.7766282, "pop": 76.9, "saudi_pct": 84.2, "saudi_count": 64.7, "income": 10.7, "nd": 4.0, "score": 695.7, "rank": 3}, {"hood": "العارض", "lat": 24.8460553, "lng": 46.6303434, "pop": 34.3, "saudi_pct": 87.2, "saudi_count": 29.9, "income": 11.3, "nd": 4.28, "score": 338.0, "rank": 4}, {"hood": "السليمانية/العليا", "lat": 24.7018094, "lng": 46.6806913, "pop": 75.3, "saudi_pct": 29.9, "saudi_count": 22.5, "income": 13.6, "nd": 6.92, "score": 305.1, "rank": 5}, {"hood": "النرجس", "lat": 24.8178879, "lng": 46.686057, "pop": 27.6, "saudi_pct": 79.9, "saudi_count": 22.1, "income": 12.0, "nd": 3.44, "score": 264.6, "rank": 6}, {"hood": "عرقة", "lat": 24.6864056, "lng": 46.5826153, "pop": 22.8, "saudi_pct": 63.9, "saudi_count": 14.6, "income": 8.0, "nd": 7.55, "score": 116.3, "rank": 7}]}</script>
+<script type="application/json" id="data-peak">{"layer": "peak_traffic_intel", "basis": "ESTIMATED weekday (Sun-Thu) peak travel time to nearest Drive7. Model: straight-line × route_factor(1.35) ÷ peak_speed(24km/h) × dir_penalty(1.10). Underserved = >30 min. Shows candidate locations whose new branch brings travel <30 min. NOTE: estimate, not live Google Routes data.", "params": {"peak_speed_kmh": 24, "route_factor": 1.35, "dir_penalty": 1.1, "threshold_min": 30, "days": "Sun-Thu"}, "disclaimer": "تقديري — لا يعتمد على بيانات Google Routes حية. يتطلب Routes API للأرقام الفعلية.", "generated_at": "2026-06-25", "sites": [{"hood": "المنصورة", "lat": 24.59677, "lng": 46.7461, "nearest_d7_km": 12.74, "peak_minutes": 47.3, "demand_pts": 3, "new_branch_minutes_est": 8.0, "rank": 1}, {"hood": "ظهرة لبن", "lat": 24.63053, "lng": 46.52583, "nearest_d7_km": 12.38, "peak_minutes": 46.0, "demand_pts": 2, "new_branch_minutes_est": 8.0, "rank": 2}, {"hood": "المربع", "lat": 24.65504, "lng": 46.69331, "nearest_d7_km": 11.7, "peak_minutes": 43.4, "demand_pts": 2, "new_branch_minutes_est": 7.9, "rank": 3}, {"hood": "طويق", "lat": 24.55434, "lng": 46.51156, "nearest_d7_km": 11.53, "peak_minutes": 42.8, "demand_pts": 1, "new_branch_minutes_est": 7.8, "rank": 4}, {"hood": "الديرة", "lat": 24.63053, "lng": 46.70876, "nearest_d7_km": 11.16, "peak_minutes": 41.4, "demand_pts": 2, "new_branch_minutes_est": 7.5, "rank": 5}, {"hood": "العزيزية", "lat": 24.60811, "lng": 46.70645, "nearest_d7_km": 9.52, "peak_minutes": 35.3, "demand_pts": 2, "new_branch_minutes_est": 6.4, "rank": 6}, {"hood": "الملز", "lat": 24.66259, "lng": 46.72975, "nearest_d7_km": 8.59, "peak_minutes": 31.9, "demand_pts": 1, "new_branch_minutes_est": 5.8, "rank": 7}]}</script>
+<script type="application/json" id="data-peak20">{"layer": "peak_traffic_intel_20", "basis": "IDENTICAL formula to peak filter; wider demand base; 20 underserved >30min; ESTIMATED.", "params": {"peak_speed_kmh": 24, "route_factor": 1.35, "dir_penalty": 1.1, "threshold_min": 30, "count": 20}, "generated_at": "2026-06-25", "sites": [{"hood": "المنصورة", "lat": 24.59677, "lng": 46.7461, "nearest_d7_km": 12.74, "peak_minutes": 47.3, "demand_pts": 3, "new_branch_minutes_est": 8.0, "rank": 1}, {"hood": "الندوة", "lat": 24.8013, "lng": 46.89105, "nearest_d7_km": 12.48, "peak_minutes": 46.3, "demand_pts": 1, "new_branch_minutes_est": 8.0, "rank": 2}, {"hood": "المربع", "lat": 24.65504, "lng": 46.69331, "nearest_d7_km": 11.7, "peak_minutes": 43.4, "demand_pts": 2, "new_branch_minutes_est": 7.9, "rank": 3}, {"hood": "طويق", "lat": 24.55434, "lng": 46.51156, "nearest_d7_km": 11.54, "peak_minutes": 42.8, "demand_pts": 1, "new_branch_minutes_est": 7.8, "rank": 4}, {"hood": "الديرة", "lat": 24.63053, "lng": 46.70876, "nearest_d7_km": 11.16, "peak_minutes": 41.4, "demand_pts": 2, "new_branch_minutes_est": 7.5, "rank": 5}, {"hood": "ظهرة لبن", "lat": 24.63057, "lng": 46.5416, "nearest_d7_km": 11.13, "peak_minutes": 41.3, "demand_pts": 4, "new_branch_minutes_est": 7.5, "rank": 6}, {"hood": "المعيزيلة", "lat": 24.80304, "lng": 46.85384, "nearest_d7_km": 9.92, "peak_minutes": 36.8, "demand_pts": 1, "new_branch_minutes_est": 6.7, "rank": 7}, {"hood": "صناعية الرمال", "lat": 24.83901, "lng": 46.82581, "nearest_d7_km": 9.61, "peak_minutes": 35.7, "demand_pts": 1, "new_branch_minutes_est": 6.5, "rank": 8}, {"hood": "الرمال", "lat": 24.83711, "lng": 46.8222, "nearest_d7_km": 9.19, "peak_minutes": 34.1, "demand_pts": 2, "new_branch_minutes_est": 6.2, "rank": 9}, {"hood": "الملز", "lat": 24.66259, "lng": 46.72975, "nearest_d7_km": 8.59, "peak_minutes": 31.9, "demand_pts": 1, "new_branch_minutes_est": 5.8, "rank": 10}]}</script>
 <script>
 "use strict";
 (function(){
@@ -270,6 +286,8 @@
   var extraIntel = eiData.sites || [];
   var demographics = demoData.districts || [];
   var incomeIntel = incData.sites || [];
+  var peakIntel = (parse('data-peak')||{sites:[]}).sites || [];
+  var peak20Intel = (parse('data-peak20')||{sites:[]}).sites || [];
   var confirmed = branches.filter(function(b){return b.status==='confirmed';});
   var verify    = branches.filter(function(b){return b.status!=='confirmed';});
 
@@ -295,6 +313,8 @@
   setText('ct-extraintel', fmt(extraIntel.length));
   setText('ct-demographics', fmt(demographics.length));
   setText('ct-income', fmt(incomeIntel.length));
+  setText('ct-peak', fmt(peakIntel.length));
+  setText('ct-peak20', fmt(peak20Intel.length));
 
   // Jarir-intel ranked list
   (function(){
@@ -334,6 +354,29 @@
         '<div class="h">'+s.hood+'</div>'+
         '<div class="m">سكان: '+s.pop+' ألف · سعوديون: '+s.saudi_pct+'% · دخل: '+s.income+' · أقرب درايف7: '+s.nd+' كم</div>'+
         '</div><span class="sc" style="color:#0e7490">'+s.score+'</span>';
+      box.appendChild(div);
+    });
+  })();
+
+  (function(){
+    var box=document.getElementById('peak-list'); if(!box) return;
+    peakIntel.forEach(function(s){
+      var div=document.createElement('div'); div.className='sugg';
+      div.style.background='#fff1f3'; div.style.borderColor='#f5c2cb';
+      div.innerHTML='<span class="rk" style="background:#be123c">'+s.rank+'</span><div class="info">'+
+        '<div class="h">'+s.hood+'</div>'+
+        '<div class="m">زمن الذروة لأقرب درايف7: '+s.peak_minutes+' دقيقة ('+s.nearest_d7_km+' كم) · غير مخدومة</div>'+
+        '</div><span class="sc" style="color:#be123c">'+s.peak_minutes+'د</span>';
+      box.appendChild(div);
+    });
+  })();
+
+  (function(){
+    var box=document.getElementById('peak20-list'); if(!box) return;
+    peak20Intel.forEach(function(s){
+      var div=document.createElement('div'); div.className='sugg';
+      div.style.background='#fff7ed'; div.style.borderColor='#f3d2b3';
+      div.innerHTML='<span class="rk" style="background:#7c2d12">'+s.rank+'</span><div class="info"><div class="h">'+s.hood+'</div><div class="m">زمن الذروة لأقرب درايف7: '+s.peak_minutes+' دقيقة ('+s.nearest_d7_km+' كم) · غير مخدومة</div></div><span class="sc" style="color:#7c2d12">'+s.peak_minutes+'د</span>';
       box.appendChild(div);
     });
   })();
@@ -428,6 +471,10 @@
     layers.extraintel=L.layerGroup();
     layers.demographics=L.layerGroup();
     layers.income=L.layerGroup();
+    layers.peak=L.layerGroup();
+    layers.peak20=L.layerGroup();
+    function peak20Icon(rank){return L.divIcon({className:'',html:'<div style="position:relative;width:34px;height:34px"><div style="position:absolute;inset:0;border-radius:50%;background:#7c2d12;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.5)"></div><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:10px">\u23f1'+rank+'</span></div>',iconSize:[34,34],iconAnchor:[17,17],popupAnchor:[0,-17]});}
+    function peakIcon(rank){return L.divIcon({className:'',html:'<div style="position:relative;width:34px;height:34px"><div style="position:absolute;inset:0;border-radius:50%;background:#be123c;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.5)"></div><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:11px">\u23f1'+rank+'</span></div>',iconSize:[34,34],iconAnchor:[17,17],popupAnchor:[0,-17]});}
     function incIcon(rank){
       var html='<div style="position:relative;width:32px;height:32px">'+
         '<div style="position:absolute;inset:0;border-radius:50%;background:#0e7490;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.5)"></div>'+
@@ -610,6 +657,19 @@
         '</div>'
       ).addTo(layers.income);
     });
+    peakIntel.forEach(function(s){
+      L.marker([s.lat,s.lng],{icon:peakIcon(s.rank),zIndexOffset:1200}).bindPopup(
+        '<div class="pop"><h3>\u23f1 موقع مرشّح #'+s.rank+' — '+s.hood+'</h3>'+
+        '<div class="row">زمن الوصول لأقرب درايف7 (ذروة): <b style="color:#be123c">'+s.peak_minutes+' دقيقة</b></div>'+
+        '<div class="row">المسافة لأقرب فرع: <b>'+s.nearest_d7_km+' كم</b></div>'+
+        '<div class="row">الحالة: <b style="color:#be123c">غير مخدومة (&gt;30 دقيقة)</b></div>'+
+        '<div class="row">زمن متوقع بعد فتح فرع هنا: <b style="color:#0a8043">~'+s.new_branch_minutes_est+' دقيقة</b></div>'+
+        '<div class="row" style="margin-top:5px;color:#be123c">الأحد–الخميس · ذروة · زمن قيادة تقديري.</div></div>'
+      ).addTo(layers.peak);
+    });
+    peak20Intel.forEach(function(s){
+      L.marker([s.lat,s.lng],{icon:peak20Icon(s.rank),zIndexOffset:1150}).bindPopup('<div class="pop"><h3>\u23f1 موقع مرشّح #'+s.rank+' — '+s.hood+'</h3><div class="row">زمن الوصول لأقرب درايف7 (ذروة): <b style="color:#7c2d12">'+s.peak_minutes+' دقيقة</b></div><div class="row">المسافة: <b>'+s.nearest_d7_km+' كم</b></div><div class="row">الحالة: <b style="color:#7c2d12">غير مخدومة (&gt;30 دقيقة)</b></div><div class="row">بعد فتح فرع هنا: <b style="color:#0a8043">~'+s.new_branch_minutes_est+' دقيقة</b></div></div>').addTo(layers.peak20);
+    });
 
     layers.starbucks.addTo(map); layers.jarir.addTo(map); layers.extra.addTo(map);
     layers.suggested.addTo(map);
@@ -618,6 +678,8 @@
     layers.jaririntel.addTo(map);
     layers.extraintel.addTo(map);
     layers.income.addTo(map);
+    layers.peak.addTo(map);
+    layers.peak20.addTo(map);
     function fix(){ try{map.invalidateSize();}catch(e){} }
     setTimeout(fix,300); window.addEventListener('resize',fix);
   }
