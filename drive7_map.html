@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>درايف7 — نظام دعم قرار التوسع</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root{
+    --bg:#f4f6fa; --panel:#ffffff; --panel2:#f7f9fc; --line:#e2e8f0;
+    --ink:#1a2330; --muted:#64748b; --brand:#e63946; --brand2:#2a9d8f;
+    --blue:#5b6cff; --warn:#d98a04; --gold:#e0820a;
+  }
+  *{box-sizing:border-box;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);}
+  #app{display:flex;height:100vh;overflow:hidden;}
+  /* sidebar on the RIGHT (RTL) */
+  #sidebar{width:360px;min-width:360px;background:var(--panel);border-inline-end:1px solid var(--line);
+    display:flex;flex-direction:column;overflow-y:auto;box-shadow:2px 0 12px rgba(20,40,80,.04);}
+  #mapwrap{flex:1;position:relative;min-width:0;}
+  #map{position:absolute;inset:0;background:#e8edf3;}
+  #map-msg{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+    flex-direction:column;gap:10px;text-align:center;color:var(--muted);padding:30px;z-index:500;}
+  #map-msg h3{margin:0;color:var(--ink);font-size:16px;}
+  #map-msg p{margin:0;font-size:13px;line-height:1.9;max-width:380px;}
+  .brandbar{padding:18px;border-bottom:1px solid var(--line);}
+  .brandbar h1{margin:0;font-size:20px;font-weight:700;}
+  .brandbar h1 .sev{color:var(--brand);}
+  .brandbar p{margin:4px 0 0;font-size:12px;color:var(--muted);}
+  .section{padding:14px 18px;border-bottom:1px solid var(--line);}
+  .section h2{margin:0 0 10px;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.4px;}
+  .layer{display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:8px;
+    background:var(--panel2);border:1px solid var(--line);border-radius:10px;cursor:pointer;transition:.15s;}
+  .layer:hover{border-color:#c2d0e4;box-shadow:0 2px 8px rgba(20,40,80,.06);}
+  .layer.off{opacity:.5;}
+  .layer .dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+  .layer .nm{flex:1;font-size:13px;font-weight:500;}
+  .layer .ct{font-size:12px;color:var(--muted);font-weight:700;background:#eef2f8;padding:2px 9px;border-radius:20px;}
+  .sw{width:36px;height:20px;border-radius:20px;background:#cbd5e1;position:relative;transition:.15s;flex-shrink:0;}
+  .sw::after{content:"";position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:2px;right:2px;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.2);}
+  .layer.off .sw{background:#cbd5e1;}
+  .layer.off .sw::after{right:18px;}
+  .layer:not(.off) .sw{background:var(--brand2);}
+  .stat{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;gap:8px;}
+  .stat span:last-child{font-weight:700;text-align:start;}
+  .soon{font-size:11px;color:var(--muted);font-style:italic;padding:5px 0;}
+  .note{font-size:11px;color:var(--muted);line-height:1.8;}
+  .pill{display:inline-block;font-size:10px;padding:1px 7px;border-radius:20px;margin-inline-start:6px;background:#fdf0d5;color:var(--warn);}
+  .leaflet-popup-content-wrapper{background:#fff;color:var(--ink);border-radius:12px;direction:rtl;text-align:right;border:1px solid var(--line);box-shadow:0 6px 24px rgba(20,40,80,.12);}
+  .leaflet-popup-tip{background:#fff;}
+  .pop h3{margin:0 0 6px;font-size:14px;}
+  .pop .row{font-size:12px;color:var(--muted);margin:3px 0;}
+  .pop .row b{color:var(--ink);}
+  .pop .rate{color:var(--gold);font-weight:700;}
+  .pop a{color:var(--brand2);font-size:12px;text-decoration:none;}
+  .credit{padding:12px 18px;font-size:11px;color:var(--muted);}
+  .sugg{display:flex;align-items:center;gap:9px;padding:8px 10px;margin-bottom:7px;background:#fff5f5;
+    border:1px solid #f3c9cc;border-radius:9px;}
+  .sugg .rk{width:22px;height:22px;border-radius:50%;background:var(--brand);color:#fff;font-weight:700;
+    font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .sugg .info{flex:1;min-width:0;}
+  .sugg .h{font-size:13px;font-weight:600;}
+  .sugg .m{font-size:11px;color:var(--muted);}
+  .sugg .sc{font-size:13px;font-weight:700;color:var(--brand);}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <div class="brandbar">
+      <h1>درايف<span class="sev">7</span> · خريطة التوسع</h1>
+      <p>نظام دعم قرار اختيار مواقع الفروع — السعودية</p>
+    </div>
+
+    <div class="section">
+      <h2>الطبقات (اضغط للتشغيل/الإيقاف)</h2>
+      <div class="layer" data-layer="confirmed">
+        <span class="dot" style="background:var(--brand)"></span>
+        <span class="nm">فروع درايف7 المؤكدة</span>
+        <span class="ct" id="ct-confirmed">0</span><span class="sw"></span>
+      </div>
+      <div class="layer off" data-layer="verify">
+        <span class="dot" style="background:var(--warn)"></span>
+        <span class="nm">فروع تحتاج تحقق <span class="pill">⚠</span></span>
+        <span class="ct" id="ct-verify">0</span><span class="sw"></span>
+      </div>
+      <div class="layer" data-layer="competitors">
+        <span class="dot" style="background:#7b3ff2;border-radius:3px"></span>
+        <span class="nm">المنافسون (عناية بالسيارات)</span>
+        <span class="ct" id="ct-competitors">0</span><span class="sw"></span>
+      </div>
+      <div class="layer" data-layer="starbucks">
+        <span class="dot" style="background:#0a8043"></span>
+        <span class="nm">ستاربكس ★</span>
+        <span class="ct" id="ct-starbucks">0</span><span class="sw"></span>
+      </div>
+      <div class="layer" data-layer="jarir">
+        <span class="dot" style="background:#1469c7"></span>
+        <span class="nm">جرير</span>
+        <span class="ct" id="ct-jarir">0</span><span class="sw"></span>
+      </div>
+      <div class="layer" data-layer="extra">
+        <span class="dot" style="background:#f2b417"></span>
+        <span class="nm">إكسترا</span>
+        <span class="ct" id="ct-extra">0</span><span class="sw"></span>
+      </div>
+      <div class="layer" data-layer="suggested" style="border-color:#e63946;background:#fff5f5">
+        <span class="dot" style="background:#e63946;border-radius:0;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)"></span>
+        <span class="nm" style="font-weight:700">★ مقترح حسب المراجعات</span>
+        <span class="ct" id="ct-suggested">0</span><span class="sw"></span>
+      </div>
+      <div class="layer" data-layer="density" style="border-color:#f4810a;background:#fff8f0">
+        <span class="dot" style="background:#f4810a;border-radius:2px;transform:rotate(45deg)"></span>
+        <span class="nm" style="font-weight:700">◆ مقترح حسب عدد الفروع</span>
+        <span class="ct" id="ct-density">0</span><span class="sw"></span>
+      </div>
+      <div class="layer" data-layer="sbintel" style="border-color:#0a8043;background:#f0faf5">
+        <span class="dot" style="background:#fff;border:3px solid #0a8043;border-radius:50%"></span>
+        <span class="nm" style="font-weight:700">☕ تحليل ستاربكس الذكي</span>
+        <span class="ct" id="ct-sbintel">0</span><span class="sw"></span>
+      </div>
+      <div class="layer" data-layer="jaririntel" style="border-color:#1469c7;background:#eef5fd">
+        <span class="dot" style="background:#fff;border:3px solid #1469c7;border-radius:50%"></span>
+        <span class="nm" style="font-weight:700">مقترح بناءً على مواقع جرير</span>
+        <span class="ct" id="ct-jaririntel">0</span><span class="sw"></span>
+      </div>
+      <div class="layer" data-layer="extraintel" style="border-color:#d99100;background:#fffaf0">
+        <span class="dot" style="background:#fff;border:3px solid #f2b417;border-radius:50%"></span>
+        <span class="nm" style="font-weight:700">مقترح بناءً على مواقع إكسترا</span>
+        <span class="ct" id="ct-extraintel">0</span><span class="sw"></span>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>مقترح بناءً على مواقع جرير</h2>
+      <p class="note" style="margin-bottom:8px">مبني على فروع جرير في الرياض. نجمّع الفروع ضمن 2كم، ودرجة الفرصة = <b>قوة جرير</b> (عدد الفروع + المراجعات) <b>×</b> <b>ندرة خدمة درايف7</b>. نعرض البقع التي يبعد عنها درايف7 <b>≥2.5كم</b>.</p>
+      <div id="jri-list"></div>
+    </div>
+
+    <div class="section">
+      <h2>مقترح بناءً على مواقع إكسترا</h2>
+      <p class="note" style="margin-bottom:8px">مبني على فروع إكسترا في الرياض. درجة الفرصة = <b>قوة إكسترا</b> (عدد الفروع + المراجعات) <b>×</b> <b>ندرة خدمة درايف7</b>. نعرض البقع التي يبعد عنها درايف7 <b>≥2.5كم</b>.</p>
+      <div id="eri-list"></div>
+    </div>
+
+    <div class="section">
+      <h2>☕ مقترح بعقلية ستاربكس</h2>
+      <p class="note" style="margin-bottom:8px">مبني على <b>القائمة الرسمية الكاملة (185 فرع ستاربكس)</b>. نجمّع الفروع ضمن 1.5كم في بقعة، ودرجة الفرصة = <b>عدد الفروع × ندرة خدمة درايف7</b> (كلما بَعُد درايف7 زادت الفرصة). نعرض ≥20 بقعة يبعد عنها درايف7 <b>≥2.5كم</b>. (فروع المطار مُستبعدة، والمراجعات تُعرض حيث توفّرت).</p>
+      <div id="sbi-list"></div>
+    </div>
+
+    <div class="section">
+      <h2>مقترح حسب المراجعات (الطلب)</h2>
+      <p class="note" style="margin-bottom:8px">حيث تتركّز ستاربكس/جرير/إكسترا ذات المراجعات العالية (طلب مرتفع) ولا يوجد فرع درايف7 قريب.</p>
+      <div id="sugg-list"></div>
+    </div>
+
+    <div class="section">
+      <h2>مقترح حسب عدد الفروع (التواجد)</h2>
+      <p class="note" style="margin-bottom:8px">حيث يتجمّع أكبر عدد من فروع العلامات الثلاث (بغضّ النظر عن المراجعات) ولا يوجد فرع درايف7 قريب.</p>
+      <div id="dens-list"></div>
+    </div>
+
+    <div class="section">
+      <h2>تحليل المنافسين — الرياض</h2>
+      <div class="stat"><span>عدد المنافسين</span><span id="cmp-total">—</span></div>
+      <div class="stat"><span>متوسط تقييم المنافسين</span><span id="cmp-rate">—</span></div>
+      <div class="stat"><span>إجمالي مراجعات المنافسين</span><span id="cmp-rev">—</span></div>
+      <div class="stat"><span>أقوى منافس (مراجعات)</span><span id="cmp-top">—</span></div>
+    </div>
+
+    <div class="section">
+      <h2>العلامات المرجعية — الرياض</h2>
+      <div class="stat"><span>جرير — الفروع</span><span id="rb-j">—</span></div>
+      <div class="stat"><span>إكسترا — الفروع</span><span id="rb-e">—</span></div>
+      <div class="stat"><span>ستاربكس — الفروع</span><span id="rb-s">—</span></div>
+      <div class="stat"><span>إجمالي مراجعات العلامات</span><span id="rb-rev">—</span></div>
+      <div class="stat"><span>أعلى حي تركّزاً</span><span id="rb-top">—</span></div>
+      <p class="note" style="margin-top:8px">كل علامة لها أيقونة ولون مستقل وفلتر منفصل: <b style="color:#0a8043">ستاربكس أخضر ★</b> · <b style="color:#1469c7">جرير أزرق</b> · <b style="color:#f2b417">إكسترا أصفر</b>. المنافسون مربّع <b style="color:#7b3ff2">بنفسجي</b>، ودرايف7 دبوس <b style="color:#e63946">أحمر</b>.</p>
+    </div>
+
+    <div class="section">
+      <h2>ملخص تغطية درايف7</h2>
+      <div class="stat"><span>إجمالي الفروع المؤكدة</span><span id="s-total">—</span></div>
+      <div class="stat"><span>الرياض</span><span id="s-ryd">—</span></div>
+      <div class="stat"><span>جدة</span><span id="s-jed">—</span></div>
+      <div class="stat"><span>بريدة</span><span id="s-bur">—</span></div>
+      <div class="stat"><span>متوسط التقييم</span><span id="s-rate">—</span></div>
+      <div class="stat"><span>إجمالي المراجعات</span><span id="s-rev">—</span></div>
+    </div>
+
+    <div class="section">
+      <h2>طبقات قادمة</h2>
+      <div class="soon">◔ وكالات السيارات الرسمية (المرحلة 5)</div>
+      <div class="soon">◔ الكثافة السكانية والمؤشرات (المرحلة 6)</div>
+      <div class="soon">◔ نطاقات زمن الوصول 20/30/40 دقيقة (المرحلة 7)</div>
+      <div class="soon">◔ المناطق غير المخدومة + المواقع المرشحة</div>
+    </div>
+
+    <div class="section">
+      <h2>ملاحظة البيانات</h2>
+      <p class="note">المصدر: خرائط Google عبر Apify (<code>compass/crawler-google-places</code>) — جُمعت 2026/06/25.
+      تواريخ المراجعات وسرعة المراجعات وأوقات الذروة: <b>غير متوفرة حاليًا</b> (تتطلب تشغيلاً إضافياً مدفوعاً).</p>
+    </div>
+    <div class="credit">نسخة أولية — تُبنى على مراحل.</div>
+  </aside>
+
+  <div id="mapwrap">
+    <div id="map"></div>
+    <div id="map-msg">
+      <h3>الخريطة بحاجة اتصال بالإنترنت</h3>
+      <p>اللوحة والبيانات تعمل بالكامل. لعرض الخريطة التفاعلية، افتح الملف
+      <b>drive7_map.html</b> في متصفح (Chrome / Safari) متصل بالإنترنت.</p>
+    </div>
+  </div>
+</div>
+
+<!-- DATA: kept in separate JSON script tags so injection can never break app logic -->
+<script type="application/json" id="data-branches">{"layer": "drive7_branches", "source": "Apify compass/crawler-google-places", "run_id": "G39aQAwzOMoxcUDRN", "collected_at": "2026-06-25", "confidence_note": "confirmed = name match + car-care category + non-duplicate; needs_verification = name match but ambiguous category/low reviews", "branches": [{"id": "d7-01", "title": "درايف7", "city": "الرياض", "neighborhood": "القدس", "street": "طريق الملك عبدالله", "lat": 24.7613459, "lng": 46.7437604, "rating": 4.6, "reviews": 234, "phone": "+966 57 352 2762", "placeId": "ChIJA_4jIGgDLz4RI6haV3YPaRY", "status": "confirmed"}, {"id": "d7-02", "title": "درايف7", "city": "الرياض", "neighborhood": "الوادي", "street": "طريق أبي بكر الصديق", "lat": 24.7871909, "lng": 46.6820534, "rating": 4.3, "reviews": 1394, "phone": "+966 53 048 9500", "placeId": "ChIJqwi3U9j8Lj4R65JXGtx707Y", "status": "confirmed"}, {"id": "d7-03", "title": "Drive7", "city": "الرياض", "neighborhood": "المنار", "street": "طريق خريص", "lat": 24.7331526, "lng": 46.7928005, "rating": 4.8, "reviews": 278, "phone": "+966 50 110 2723", "placeId": "ChIJ_-OysY8BLz4R500sxyMliYA", "status": "confirmed"}, {"id": "d7-04", "title": "درايف7", "city": "الرياض", "neighborhood": "قرطبة", "street": "شارع خالد بن الوليد", "lat": 24.8039239, "lng": 46.7387926, "rating": 4.8, "reviews": 312, "phone": "+966 55 518 6493", "placeId": "ChIJa91STIL9Lj4RglqxKMFTans", "status": "confirmed"}, {"id": "d7-05", "title": "درايف7", "city": "الرياض", "neighborhood": "النخيل", "street": "شارع التخصصي", "lat": 24.751957, "lng": 46.6401335, "rating": 4.8, "reviews": 227, "phone": "+966 55 750 0718", "placeId": "ChIJVU4XLybjLj4Rz7lydD_nS_o", "status": "confirmed"}, {"id": "d7-06", "title": "درايف7", "city": "الرياض", "neighborhood": "الريان", "street": "طريق خريص", "lat": 24.7250343, "lng": 46.7797343, "rating": 4.2, "reviews": 879, "phone": "+966 55 516 4356", "placeId": "ChIJ23_EmxgBLz4R5VXey86LTSk", "status": "confirmed"}, {"id": "d7-07", "title": "Drive7", "city": "الرياض", "neighborhood": "العوالي", "street": "الطريق الدائري الغربي", "lat": 24.5651963, "lng": 46.6249857, "rating": 4.2, "reviews": 449, "phone": "+966 50 677 7268", "placeId": "ChIJ-ck92u0RLz4RCSjzgcWMoSY", "status": "confirmed"}, {"id": "d7-08", "title": "Drive7", "city": "جدة", "neighborhood": "الفيصلية", "street": "طريق المدينة المنورة", "lat": 21.5741649, "lng": 39.1678648, "rating": 4.4, "reviews": 998, "phone": "+966 55 243 3657", "placeId": "ChIJQ9Lgl2XQwxUR90n14WS-Fyg", "status": "confirmed"}, {"id": "d7-09", "title": "درايف7", "city": "الرياض", "neighborhood": "النخيل", "street": "طريق الأمير محمد بن سعد", "lat": 24.7448125, "lng": 46.6208125, "rating": 4.8, "reviews": 130, "phone": "+966 55 519 3813", "placeId": "ChIJtRbFKlPjLj4R30gkX16UNb8", "status": "confirmed"}, {"id": "d7-10", "title": "درايف7", "city": "الرياض", "neighborhood": "الملقا", "street": "طريق أنس ابن مالك", "lat": 24.8087235, "lng": 46.6201819, "rating": 4.6, "reviews": 313, "phone": "+966 55 528 5632", "placeId": "ChIJ7QGlp9vlLj4RiUmCOKFGyBQ", "status": "confirmed"}, {"id": "d7-11", "title": "درايف7", "city": "بريدة", "neighborhood": "-", "street": "طريق الملك عبدالعزيز", "lat": 26.3756434, "lng": 43.9119472, "rating": 4.6, "reviews": 795, "phone": "+966 55 036 5008", "placeId": "ChIJl2g_xrFXfxURidvlu0AiqLw", "status": "confirmed"}, {"id": "d7-12", "title": "Drive7", "city": "الرياض", "neighborhood": "القيروان", "street": "طريق الأمير محمد بن سعد", "lat": 24.8244637, "lng": 46.5929344, "rating": 4.9, "reviews": 55, "phone": "+966 53 495 0052", "placeId": "ChIJ0a7G6lPnLj4R0MCbZrO4-xA", "status": "confirmed"}, {"id": "d7-13", "title": "Drive7", "city": "الرياض", "neighborhood": "العقيق", "street": "طريق الإمام سعود بن فيصل", "lat": 24.7867621, "lng": 46.6147681, "rating": 4.8, "reviews": 26, "phone": "+966 55 527 3563", "placeId": "ChIJRTBf-lzjLj4RDucaE7oiZns", "status": "confirmed"}, {"id": "d7-v1", "title": "DRIVE 7 (غسيل سيارات)", "city": "الرياض", "neighborhood": "النرجس", "street": "طريق أبي بكر الصديق", "lat": 24.8692898, "lng": 46.639631, "rating": 4.5, "reviews": 8, "phone": "", "placeId": "ChIJucRQFgDlLj4RSLnulhMuk3k", "status": "needs_verification"}]}</script>
+<script type="application/json" id="data-competitors">{"layer": "competitors", "source": "Apify compass/crawler-google-places", "run_id": "UjHtVt03XR6o5LoLo", "collected_at": "2026-06-25", "scope": "Riyadh only", "rules": "kept: car-care/tinting/PPF/ceramic/polish in Riyadh. excluded: Drive7 itself, simple car washes in other cities, clothing tailor 'لومار للثياب', non-Riyadh results.", "competitors": [{"id": "c-01", "title": "بيور كار Pure Car (PPF/تظليل/سيراميك)", "neighborhood": "القادسية", "lat": 24.8281295, "lng": 46.8265132, "rating": 4.8, "reviews": 367, "service": "شامل", "placeId": "ChIJdTTAndH_Lj4RKijixz6nIcs"}, {"id": "c-02", "title": "صن شيلد sunshield - القادسية", "neighborhood": "القادسية", "lat": 24.8307434, "lng": 46.8299801, "rating": 5.0, "reviews": 138, "service": "تظليل/سيراميك", "placeId": "ChIJt5ixLgBVLj4R3ddNV_wgqeg"}, {"id": "c-03", "title": "3M Crystal Shade ظلال الكريستال", "neighborhood": "الوادي", "lat": 24.7814463, "lng": 46.6848293, "rating": 4.7, "reviews": 536, "service": "تظليل", "placeId": "ChIJPZIcqyb9Lj4RRlDkuqloCWY"}, {"id": "c-04", "title": "صن شيلد - ظهرة لبن", "neighborhood": "ظهرة لبن", "lat": 24.6356818, "lng": 46.5608664, "rating": 4.4, "reviews": 459, "service": "تظليل", "placeId": "ChIJxZmp7tAeLz4R91fz_qEIC1o"}, {"id": "c-05", "title": "لومار للعزل الحراري LLumar - العوالي", "neighborhood": "العوالي", "lat": 24.5646061, "lng": 46.6262323, "rating": 4.6, "reviews": 309, "service": "عزل حراري", "placeId": "ChIJtwz4Y6wRLz4R_hCs3sp3w1c"}, {"id": "c-06", "title": "فيرتكس بلس", "neighborhood": "الربوة", "lat": 24.6941403, "lng": 46.7702573, "rating": 4.8, "reviews": 234, "service": "تظليل", "placeId": "ChIJG5jrmtMHLz4RnsRIOir5fQ0"}, {"id": "c-07", "title": "Other Ways", "neighborhood": "النرجس", "lat": 24.832431, "lng": 46.6809297, "rating": 4.7, "reviews": 238, "service": "شامل", "placeId": "ChIJpUzrIcD7Lj4RvkNaf9-zbmg"}, {"id": "c-08", "title": "NANOVIEW-KSA - الشفا", "neighborhood": "المروة", "lat": 24.5495415, "lng": 46.6740168, "rating": 4.7, "reviews": 145, "service": "شامل", "placeId": "ChIJ3_5CekAPLz4R9_47wx9qRE4"}, {"id": "c-09", "title": "3M Auto care - الصحافة", "neighborhood": "الصحافة", "lat": 24.7898412, "lng": 46.6476294, "rating": 4.7, "reviews": 279, "service": "شامل", "placeId": "ChIJcQQ3gknjLj4RA2CmN0EPEw4"}, {"id": "c-10", "title": "أفق الفخامة 3M", "neighborhood": "القيروان", "lat": 24.8440947, "lng": 46.6047409, "rating": 4.6, "reviews": 198, "service": "شامل", "placeId": "ChIJrfLsTwflLj4Rl30XQBf7nm4"}, {"id": "c-11", "title": "تلميع سيارات (دروب السعادة)", "neighborhood": "السلام", "lat": 24.7044996, "lng": 46.8240573, "rating": 4.9, "reviews": 954, "service": "تلميع", "placeId": "ChIJYSqwr2EHLz4Rv1GGD3B-yHM"}, {"id": "c-12", "title": "جاميكا لتلميع السيارات والحماية", "neighborhood": "العوالي", "lat": 24.5513039, "lng": 46.5896314, "rating": 4.9, "reviews": 70, "service": "تلميع/حماية", "placeId": "ChIJx-MXi4cXLz4RznnpQj1XIZc"}, {"id": "c-13", "title": "بصمة لامعة تلميع سيارات متنقل", "neighborhood": "الرحمانية", "lat": 24.7277005, "lng": 46.6641338, "rating": 4.8, "reviews": 1454, "service": "تلميع", "placeId": "ChIJueFkS28dLz4R5Po7241M_fY"}, {"id": "c-14", "title": "MU Polish تلميع وحماية", "neighborhood": "الرمال", "lat": 24.8370625, "lng": 46.8230625, "rating": 4.6, "reviews": 253, "service": "تلميع/حماية", "placeId": "ChIJB4IF6DH_Lj4RxxLMvoOosNo"}, {"id": "c-15", "title": "MotorTech The PPF Specialist", "neighborhood": "الصحافة", "lat": 24.7912123, "lng": 46.6481623, "rating": 5.0, "reviews": 194, "service": "PPF", "placeId": "ChIJ-VZn2h7jLj4RERcuYd1Cz3M"}, {"id": "c-16", "title": "ديفوبرو تطوير الحماية", "neighborhood": "السليمانية", "lat": 24.7170109, "lng": 46.6835269, "rating": 4.5, "reviews": 57, "service": "حماية", "placeId": "ChIJ3_Lm8IzlLj4RaJCJWYhGYmE"}, {"id": "c-17", "title": "ناين رود - PPF/عازل/تلميع", "neighborhood": "الملك فهد", "lat": 24.7427966, "lng": 46.6719167, "rating": 4.6, "reviews": 36, "service": "شامل", "placeId": "ChIJ_cX1icADLz4RPFpuumLWync"}, {"id": "c-18", "title": "نانو فور لايف الرياض", "neighborhood": "الخليج", "lat": 24.7746923, "lng": 46.7782918, "rating": 4.9, "reviews": 238, "service": "شامل", "placeId": "ChIJ61I6bgABLz4RlO_cijARxZg"}, {"id": "c-19", "title": "Wolfline Motorwork", "neighborhood": "المصيف", "lat": 24.775243, "lng": 46.6871879, "rating": 4.9, "reviews": 364, "service": "شامل", "placeId": "ChIJLX-C6iD9Lj4R_27kcvqTCSk"}, {"id": "c-20", "title": "سيراميك بلس", "neighborhood": "الورود", "lat": 24.7155888, "lng": 46.6794347, "rating": 4.9, "reviews": 553, "service": "سيراميك", "placeId": "ChIJI5I_SvYDLz4RC8jDuATJKK8"}, {"id": "c-21", "title": "Protect You بروتيكت يو", "neighborhood": "الرمال", "lat": 24.8371642, "lng": 46.8213383, "rating": 5.0, "reviews": 106, "service": "شامل", "placeId": "ChIJDagkNQD_Lj4RfvtOrQuHy0I"}, {"id": "c-22", "title": "نانو بلس 3M - الروضة", "neighborhood": "الروضة", "lat": 24.7387557, "lng": 46.7500721, "rating": 4.9, "reviews": 379, "service": "شامل", "placeId": "ChIJZ4kv5-gBLz4RiB7m-jdZKRA"}, {"id": "c-23", "title": "الحماية اليابانية", "neighborhood": "العزيزية", "lat": 24.5448292, "lng": 46.6809463, "rating": 4.9, "reviews": 339, "service": "حماية", "placeId": "ChIJFWfDnFYPLz4R-nbqdxlAmCI"}, {"id": "c-24", "title": "LLUMAR لومار للعزل - الوادي", "neighborhood": "الوادي", "lat": 24.7984622, "lng": 46.6969958, "rating": 4.9, "reviews": 454, "service": "عزل حراري", "placeId": "ChIJAejjkN79Lj4RHn7P-SqRUYA"}, {"id": "c-25", "title": "هورش للعناية - الياسمين", "neighborhood": "الياسمين", "lat": 24.81446, "lng": 46.6525367, "rating": 4.7, "reviews": 321, "service": "شامل", "placeId": "ChIJp4R_BYHlLj4RRyfKYf-BDWY"}, {"id": "c-26", "title": "عربة الرواد 3M عزل حراري", "neighborhood": "العليا", "lat": 24.7107323, "lng": 46.668358, "rating": 4.2, "reviews": 408, "service": "عزل حراري", "placeId": "ChIJGdEe_ywdLz4R4nCTYJGqJuM"}, {"id": "c-27", "title": "NANOVIEW-KSA - قرطبة", "neighborhood": "قرطبة", "lat": 24.8004114, "lng": 46.7393533, "rating": 4.8, "reviews": 517, "service": "شامل", "placeId": "ChIJEW4tr2EHLz4R1G1g19sonlA"}, {"id": "c-28", "title": "لومار للعزل الحراري - الروضة", "neighborhood": "الروضة", "lat": 24.7180552, "lng": 46.7665213, "rating": 4.2, "reviews": 459, "service": "عزل حراري", "placeId": "ChIJwRwupf8BLz4RQ7gbxq2cKUk"}, {"id": "c-29", "title": "لمعة الفخامة - بيرفكت نانو", "neighborhood": "قرطبة", "lat": 24.8022174, "lng": 46.7386246, "rating": 4.5, "reviews": 537, "service": "تلميع", "placeId": "ChIJ3egCy9P9Lj4RimJJMkvNMOg"}, {"id": "c-30", "title": "نانو بلس 3M - الملك فيصل", "neighborhood": "الملك فيصل", "lat": 24.7625243, "lng": 46.7747699, "rating": 4.7, "reviews": 313, "service": "شامل", "placeId": "ChIJUTvxJ0UBLz4RMPrNASIf04E"}, {"id": "c-31", "title": "بوليش انجنير", "neighborhood": "الملقا", "lat": 24.7895824, "lng": 46.6197908, "rating": 4.9, "reviews": 415, "service": "شامل", "placeId": "ChIJRzeC9rvjLj4RzzR0KA-ZrCY"}, {"id": "c-32", "title": "درايف شيلد إيليت", "neighborhood": "المنار", "lat": 24.7233591, "lng": 46.79749, "rating": 4.8, "reviews": 212, "service": "شامل", "placeId": "ChIJxa49268BLz4RdMIypo-kWEA"}, {"id": "c-33", "title": "رويت للعناية بالسيارة", "neighborhood": "الروضة", "lat": 24.7387865, "lng": 46.7500579, "rating": 4.9, "reviews": 180, "service": "شامل", "placeId": "ChIJSaU5SK0BLz4RRVss5fQUjvE"}, {"id": "c-34", "title": "انفينيتي شيلد", "neighborhood": "العوالي", "lat": 24.5653125, "lng": 46.6246875, "rating": 4.8, "reviews": 421, "service": "شامل", "placeId": "ChIJ3ykmHIMRLz4RG8g9Nj1cYyM"}, {"id": "c-35", "title": "Hexa Royal هيكسا رويال خريص", "neighborhood": "الروضة", "lat": 24.7271782, "lng": 46.7806936, "rating": 4.8, "reviews": 261, "service": "شامل", "placeId": "ChIJRdG4GuUBLz4Roi3H0OrvuEc"}, {"id": "c-36", "title": "جيوشيلد", "neighborhood": "الرحمانية", "lat": 24.7094019, "lng": 46.6652428, "rating": 4.9, "reviews": 269, "service": "شامل", "placeId": "ChIJwY6wLZUdLz4RHNXfELqfd30"}, {"id": "c-37", "title": "راب ستايل", "neighborhood": "الفلاح", "lat": 24.7948964, "lng": 46.6998983, "rating": 4.7, "reviews": 372, "service": "تغليف/حماية", "placeId": "ChIJyZNRyfz8Lj4RBffQDs4Y9zs"}, {"id": "c-38", "title": "Legend 7 أفلام حماية وعازل", "neighborhood": "النرجس", "lat": 24.821103, "lng": 46.6852588, "rating": 4.6, "reviews": 367, "service": "شامل", "placeId": "ChIJJW9AymX9Lj4Rz58bRqSGgp0"}, {"id": "c-39", "title": "نانو سيراميك - الربوة", "neighborhood": "الربوة", "lat": 24.6939299, "lng": 46.7695566, "rating": 4.6, "reviews": 424, "service": "سيراميك", "placeId": "ChIJkcEc9cgGLz4RqcfNly25kws"}, {"id": "c-40", "title": "نانو سيراميك - الملقا", "neighborhood": "الملقا", "lat": 24.7805696, "lng": 46.5984528, "rating": 4.7, "reviews": 281, "service": "سيراميك", "placeId": "ChIJQygxYNjjLj4Rf44Uaq7VDws"}, {"id": "c-41", "title": "Ceramic Pro سيراميك برو - العليا", "neighborhood": "العليا", "lat": 24.7087086, "lng": 46.6650027, "rating": 4.7, "reviews": 368, "service": "سيراميك", "placeId": "ChIJ7SrjNp4dLz4RnvoljsU0Qkw"}, {"id": "c-42", "title": "سيراميك شيلد - النهضة", "neighborhood": "النهضة", "lat": 24.7415708, "lng": 46.8034474, "rating": 4.9, "reviews": 105, "service": "سيراميك", "placeId": "ChIJa26y1bwBLz4RdagDaLm39Ms"}, {"id": "c-43", "title": "درايف شيلد DRIVE SHIELD - العقيق", "neighborhood": "العقيق", "lat": 24.7892431, "lng": 46.6191921, "rating": 4.9, "reviews": 185, "service": "شامل", "placeId": "ChIJTavmnQ_jLj4Rf3rk9SoYIZQ"}, {"id": "c-44", "title": "اسطورة الريان لأفلام الحماية", "neighborhood": "النرجس", "lat": 24.821276, "lng": 46.6854998, "rating": 4.4, "reviews": 700, "service": "شامل", "placeId": "ChIJx6kWmG_9Lj4RBroN9A1EzlM"}, {"id": "c-45", "title": "UNIX يونكس للعناية بالسيارات", "neighborhood": "القادسية", "lat": 24.818408, "lng": 46.8025864, "rating": 4.8, "reviews": 153, "service": "شامل", "placeId": "ChIJrc4iZcD_Lj4RY6u6La7YJ1U"}, {"id": "c-46", "title": "Mr protection حماية وعازل", "neighborhood": "ظهرة لبن", "lat": 24.6255487, "lng": 46.5538485, "rating": 4.6, "reviews": 469, "service": "شامل", "placeId": "ChIJo8heE5QfLz4RSozXBHu-W-4"}, {"id": "c-47", "title": "نانو سيراميك - السليمانية (نانو كار)", "neighborhood": "السليمانية", "lat": 24.6980057, "lng": 46.7226998, "rating": 4.8, "reviews": 119, "service": "سيراميك", "placeId": "ChIJmxqiWSMFLz4RkXB5OWc4Yho"}, {"id": "c-48", "title": "ستايلي للعناية - القيروان", "neighborhood": "القيروان", "lat": 24.8448125, "lng": 46.6043125, "rating": 4.7, "reviews": 85, "service": "شامل", "placeId": "ChIJWahtJ-sBLz4RQVXrpr-Rxug"}, {"id": "c-49", "title": "لمعة سما مركز تلميع", "neighborhood": "الندوة", "lat": 24.8013005, "lng": 46.8910467, "rating": 4.7, "reviews": 452, "service": "تلميع", "placeId": "ChIJFzwF0fKrLz4RqEim1Y94R5c"}, {"id": "c-50", "title": "تلميع كرز للعناية بالسيارات", "neighborhood": "الخليج", "lat": 24.7826362, "lng": 46.8190988, "rating": 5.0, "reviews": 66, "service": "تلميع/حماية", "placeId": "ChIJ197ug-YBLz4R1z3Kp1aMz2g"}, {"id": "c-51", "title": "لمسات العناية Care spotless", "neighborhood": "الملك فهد", "lat": 24.7447549, "lng": 46.6781782, "rating": 4.8, "reviews": 209, "service": "تلميع", "placeId": "ChIJCysZl6j9Lj4RVhxr-SzuN_s"}, {"id": "c-52", "title": "لمسة نهائية مركز عناية", "neighborhood": "صناعية الرمال", "lat": 24.839012, "lng": 46.8258075, "rating": 4.8, "reviews": 329, "service": "شامل", "placeId": "ChIJqeQt9RBVLj4Ru2fNP6d-qNY"}, {"id": "c-53", "title": "Ceramic Pro - المروج", "neighborhood": "المروج", "lat": 24.7469599, "lng": 46.6602944, "rating": 4.0, "reviews": 90, "service": "سيراميك", "placeId": "ChIJf20hY6XiLj4R4olnbs2xg9A"}, {"id": "c-54", "title": "Ceramic Pro - الياسمين", "neighborhood": "الياسمين", "lat": 24.8219858, "lng": 46.6418281, "rating": 4.8, "reviews": 132, "service": "سيراميك", "placeId": "ChIJ7fvrmRrlLj4Rj5nwAGqClfY"}, {"title": "3M Care Style - خريص", "neighborhood": "الأندلس", "lat": 24.7384738, "lng": 46.78126, "rating": 4.6, "reviews": 497, "service": "شامل", "placeId": "ChIJgcXkBd4BLz4RAx9m1_wWKpg", "id": "c-55"}, {"title": "3M Care Style - النرجس", "neighborhood": "النرجس", "lat": 24.8274726, "lng": 46.6824469, "rating": 4.8, "reviews": 34, "service": "شامل", "placeId": "ChIJ457foO77Lj4RQxHJwk9S0aU", "id": "c-56"}, {"title": "3M Care Style - الجنادرية", "neighborhood": "المعيزيلة", "lat": 24.8030362, "lng": 46.8538399, "rating": 4.9, "reviews": 349, "service": "شامل", "placeId": "ChIJM1tpHwCrLz4R9XEHh9GlhG4", "id": "c-57"}, {"title": "3M Care Style - المصيف", "neighborhood": "المصيف", "lat": 24.7628252, "lng": 46.672477, "rating": 4.6, "reviews": 283, "service": "شامل", "placeId": "ChIJMUbt-zX9Lj4RRHbJbwQBn3g", "id": "c-58"}, {"title": "زيبارت Ziebart - المروج", "neighborhood": "المروج", "lat": 24.7602618, "lng": 46.6727221, "rating": 3.8, "reviews": 260, "service": "شامل", "placeId": "ChIJR0s4G1L9Lj4RZr_Rerz_w-o", "id": "c-59"}, {"title": "زيبارت Ziebart - الروضة", "neighborhood": "الروضة", "lat": 24.7186068, "lng": 46.7676409, "rating": 3.9, "reviews": 212, "service": "تظليل", "placeId": "ChIJTxESRj0BLz4R1mf1i_Oi4JA", "id": "c-60"}, {"title": "نانو شيلد Nano Shield - المروج", "neighborhood": "المروج", "lat": 24.7489137, "lng": 46.6650298, "rating": 4.2, "reviews": 324, "service": "شامل", "placeId": "ChIJlRkIbK7iLj4RHjFiexRX1Nk", "id": "c-61"}, {"title": "نانو شيلد Nano Shield - المروج 2", "neighborhood": "المروج", "lat": 24.74699, "lng": 46.6604225, "rating": 4.6, "reviews": 19, "service": "شامل", "placeId": "ChIJ8fPYTTzjLj4RJfPvI4MGS58", "id": "c-62"}, {"title": "نانو شيلد Nano Shield - النهضة", "neighborhood": "النهضة", "lat": 24.7416103, "lng": 46.8034034, "rating": 4.7, "reviews": 119, "service": "شامل", "placeId": "ChIJY6Y2oZUBLz4RmTsVHrPooj0", "id": "c-63"}, {"title": "زيرو ون Zero One - المروج", "neighborhood": "المروج", "lat": 24.7515758, "lng": 46.6714497, "rating": 4.6, "reviews": 315, "service": "شامل", "placeId": "ChIJD_CVa2D9Lj4RpBojMseL8zc", "id": "c-64"}, {"title": "زيرو ون Zero One - الريان", "neighborhood": "الريان", "lat": 24.7247263, "lng": 46.7791944, "rating": 4.5, "reviews": 643, "service": "شامل", "placeId": "ChIJfaoqfBgBLz4REBWIobfR2JE", "id": "c-65"}, {"title": "في كول V-KOOL - المنار", "neighborhood": "المنار", "lat": 24.7301032, "lng": 46.7878169, "rating": 4.4, "reviews": 59, "service": "تظليل/حماية", "placeId": "ChIJFf_pKhwBLz4RKFL3lMaflX4", "id": "c-66"}, {"title": "ديتاليو أوتو Dettaglio - الرحمانية", "neighborhood": "الرحمانية", "lat": 24.7095792, "lng": 46.6634833, "rating": 4.8, "reviews": 319, "service": "شامل", "placeId": "ChIJE_MUYjQdLz4RXQQbrAxMq48", "id": "c-67"}, {"title": "ديتاليو أوتو Dettaglio - الصحافة", "neighborhood": "الصحافة", "lat": 24.7909162, "lng": 46.6480394, "rating": 4.7, "reviews": 359, "service": "شامل", "placeId": "ChIJ818q-_PjLj4R_7G4cGCbDy8", "id": "c-68"}, {"title": "ديتاليو أوتو Dettaglio - القيروان", "neighborhood": "القيروان", "lat": 24.8430821, "lng": 46.6050336, "rating": 4.6, "reviews": 940, "service": "شامل", "placeId": "ChIJSwQToKflLj4RAPAw_Blanjg", "id": "c-69"}, {"title": "ديتاليو أوتو Dettaglio - الحمراء", "neighborhood": "الحمراء", "lat": 24.7751073, "lng": 46.773722, "rating": 4.6, "reviews": 781, "service": "شامل", "placeId": "ChIJCUDrDoABLz4RB7yml2XyHzU", "id": "c-70"}, {"title": "ديتاليو أوتو Dettaglio - عرقة", "neighborhood": "عرقة", "lat": 24.6852705, "lng": 46.5733546, "rating": 4.8, "reviews": 368, "service": "شامل", "placeId": "ChIJHXXkdAAfLz4RUvv50KNrEYc", "id": "c-71"}, {"title": "ديتاليو أوتو Dettaglio - الريان", "neighborhood": "الريان", "lat": 24.7248835, "lng": 46.7794499, "rating": 4.7, "reviews": 464, "service": "شامل", "placeId": "ChIJH47Qz9kBLz4RM9y7G6bfFVc", "id": "c-72"}, {"title": "ديتاليو أوتو Dettaglio - التعاون", "neighborhood": "التعاون", "lat": 24.775804, "lng": 46.687771, "rating": 4.7, "reviews": 392, "service": "شامل", "placeId": "ChIJ91EqZ7T9Lj4Rk91QbI-1rwA", "id": "c-73"}, {"title": "ديتاليو أوتو Dettaglio - مطار الملك خالد", "neighborhood": "المطار", "lat": 24.8344952, "lng": 46.735056, "rating": 4.8, "reviews": 155, "service": "شامل", "placeId": "ChIJeyi_bwD9Lj4RC7o6DYFHH7w", "id": "c-74"}, {"title": "ديتاليو أوتو Dettaglio - الربوة", "neighborhood": "الربوة", "lat": 24.693568, "lng": 46.7686805, "rating": 5.0, "reviews": 22, "service": "شامل", "placeId": "ChIJjQbKH5QHLz4Rb-FIJi0nC_M", "id": "c-75"}, {"title": "ديتاليو أوتو Dettaglio - العليا", "neighborhood": "العليا", "lat": 24.6939439, "lng": 46.6787987, "rating": 4.7, "reviews": 57, "service": "شامل", "placeId": "ChIJPdsZy2cDLz4RMqTAitSBOyg", "id": "c-76"}], "run_id_supplement": "Y9ZxSk7YUsvcYmj2m", "note_supplement": "added V-KOOL, Dettaglio, 3M Care Style, Ziebart, Nano Shield, Zero One on 2026-06-25. Sun Tech: no clear Riyadh result."}</script>
+
+<script type="application/json" id="data-refbrands">{"layer": "reference_brands", "source": "Apify compass/crawler-google-places", "run_id": "JVchGC9Eo0Fzgcfef", "collected_at": "2026-06-25", "scope": "Riyadh only", "rules": "kept official Jarir / eXtra / Starbucks branches in Riyadh. excluded: other cities (المجمعة، الخرج، الدوادمي، رماح), non-official 'جرير الثلاثين للقرطاسية', and 'جرير بلازا' (a market, not a store).", "brands": [{"id": "r-j01", "brand": "جرير", "title": "مكتبة جرير - الريان", "neighborhood": "الريان", "lat": 24.7223336, "lng": 46.7751583, "rating": 4.2, "reviews": 4500, "placeId": "ChIJBVVNcT0BLz4RPC5YiB-kIdI"}, {"id": "r-j02", "brand": "جرير", "title": "مكتبة جرير - غرناطة", "neighborhood": "غرناطة", "lat": 24.7797029, "lng": 46.73186, "rating": 4.5, "reviews": 130, "placeId": "ChIJP44JBgD9Lj4Rk92UxHQvUHE"}, {"id": "r-j03", "brand": "جرير", "title": "مكتبة جرير - النهضة", "neighborhood": "النهضة", "lat": 24.7582646, "lng": 46.8303425, "rating": 4.5, "reviews": 5761, "placeId": "ChIJewgksVyrLz4Rxn-sQfwEQTA"}, {"id": "r-j04", "brand": "جرير", "title": "مكتبة جرير - العليا", "neighborhood": "العليا", "lat": 24.7018094, "lng": 46.6806913, "rating": 4.3, "reviews": 4412, "placeId": "ChIJsWB7jyUDLz4RvNrUytWfiYg"}, {"id": "r-j05", "brand": "جرير", "title": "مكتبة جرير - الخليج", "neighborhood": "الخليج", "lat": 24.7900094, "lng": 46.8084425, "rating": 4.1, "reviews": 1372, "placeId": "ChIJz9QBrB8ALz4RkqQZLSkK4q8"}, {"id": "r-j06", "brand": "جرير", "title": "مكتبة جرير - شبرا", "neighborhood": "شبرا", "lat": 24.5693547, "lng": 46.6623396, "rating": 4.1, "reviews": 4308, "placeId": "ChIJk6DsaRgQLz4R2NSyRiJtLcA"}, {"id": "r-j07", "brand": "جرير", "title": "مكتبة جرير - النرجس", "neighborhood": "النرجس", "lat": 24.8178879, "lng": 46.686057, "rating": 4.2, "reviews": 3125, "placeId": "ChIJpwWqoKP8Lj4RoJUrphT7LAc"}, {"id": "r-j08", "brand": "جرير", "title": "مكتبة جرير - السويدي", "neighborhood": "السويدي", "lat": 24.6082851, "lng": 46.6551902, "rating": 4.1, "reviews": 1535, "placeId": "ChIJYyMQNO0aLz4RaMY_QjaBhm0"}, {"id": "r-j09", "brand": "جرير", "title": "مكتبة جرير - العارض", "neighborhood": "العارض", "lat": 24.8724932, "lng": 46.6379086, "rating": 4.3, "reviews": 1069, "placeId": "ChIJ5TZCRADlLj4R2kFw1iKUsKg"}, {"id": "r-j10", "brand": "جرير", "title": "مكتبة جرير - المنصورة", "neighborhood": "المنصورة", "lat": 24.5999717, "lng": 46.7467015, "rating": 4.2, "reviews": 513, "placeId": "ChIJvdn8OwAPLz4RErK6Zw1gwt4"}, {"id": "r-j11", "brand": "جرير", "title": "مكتبة جرير - حطين", "neighborhood": "حطين", "lat": 24.7519782, "lng": 46.5839477, "rating": 4.2, "reviews": 1729, "placeId": "ChIJ7yCk03nhLj4RnKYOk79U_-A"}, {"id": "r-j12", "brand": "جرير", "title": "مكتبة جرير - حطين 2", "neighborhood": "حطين", "lat": 24.7531614, "lng": 46.6257948, "rating": 4.2, "reviews": 678, "placeId": "ChIJmfMNQc3jLj4RBTdrDEKg1HY"}, {"id": "r-j13", "brand": "جرير", "title": "مكتبة جرير - الحمراء", "neighborhood": "الحمراء", "lat": 24.7672339, "lng": 46.7564163, "rating": 4.1, "reviews": 2713, "placeId": "ChIJx6hxFvsBLz4RzjrXs6TLgAM"}, {"id": "r-j14", "brand": "جرير", "title": "شركة جرير للتسويق - الديرة", "neighborhood": "الديرة", "lat": 24.6323697, "lng": 46.7071063, "rating": 4.3, "reviews": 805, "placeId": "ChIJWcqPrqoFLz4RTPY57BD-fOk"}, {"id": "r-j15", "brand": "جرير", "title": "مكتبة جرير - جرير (المروج)", "neighborhood": "المروج", "lat": 24.7725684, "lng": 46.6727794, "rating": 4.0, "reviews": 639, "placeId": "ChIJO7dBmdDjLj4RUj9btvyzQnM"}, {"id": "r-j16", "brand": "جرير", "title": "مكتبة جرير - المصيف", "neighborhood": "المصيف", "lat": 24.7748819, "lng": 46.6818539, "rating": 4.3, "reviews": 8250, "placeId": "ChIJgcUIZXX9Lj4R0dR4OOt-6Qw"}, {"id": "r-j17", "brand": "جرير", "title": "مكتبة جرير - الملك فهد", "neighborhood": "الملك فهد", "lat": 24.7447213, "lng": 46.6795184, "rating": 4.2, "reviews": 1653, "placeId": "ChIJ_dv0CqgCLz4RcEZO71_fOQs"}, {"id": "r-j18", "brand": "جرير", "title": "مكتبة جرير - الربوة", "neighborhood": "الربوة", "lat": 24.6916729, "lng": 46.7657846, "rating": 4.1, "reviews": 2223, "placeId": "ChIJZSLokbcGLz4RGHxzWOdgd2s"}, {"id": "r-j19", "brand": "جرير", "title": "مكتبة جرير - الروضة", "neighborhood": "الروضة", "lat": 24.7316408, "lng": 46.7545171, "rating": 4.2, "reviews": 717, "placeId": "ChIJw3zGxscBLz4R8mnW1aIVv-I"}, {"id": "r-e01", "brand": "إكسترا", "title": "إكسترا - بدر", "neighborhood": "بدر", "lat": 24.548398, "lng": 46.6967543, "rating": 4.1, "reviews": 771, "placeId": "ChIJNWTYFj8PLz4RTnpX7t96TCA"}, {"id": "r-e02", "brand": "إكسترا", "title": "إكسترا - الرائد", "neighborhood": "الرائد", "lat": 24.7129429, "lng": 46.6330318, "rating": 3.9, "reviews": 4847, "placeId": "ChIJkwd3lXUdLz4RphVOBM4zJbM"}, {"id": "r-e03", "brand": "إكسترا", "title": "إكسترا - العزيزية", "neighborhood": "العزيزية", "lat": 24.6051246, "lng": 46.7054485, "rating": 3.9, "reviews": 8611, "placeId": "ChIJY-0N3FUFLz4RF9dOtLuVnAY"}, {"id": "r-e04", "brand": "إكسترا", "title": "إكسترا - الربيع", "neighborhood": "الربيع", "lat": 24.8066497, "lng": 46.6630081, "rating": 3.7, "reviews": 6984, "placeId": "ChIJOXbBKVDjLj4Rt7jCGWusXr4"}, {"id": "r-e05", "brand": "إكسترا", "title": "إكسترا - حي الملك سلمان", "neighborhood": "حي الملك سلمان", "lat": 24.7282593, "lng": 46.6898886, "rating": 3.9, "reviews": 13997, "placeId": "ChIJ-YRMZegCLz4ROwNnlzcVMnY"}, {"id": "r-e06", "brand": "إكسترا", "title": "إكسترا - الغدير", "neighborhood": "الغدير", "lat": 24.7668158, "lng": 46.6590209, "rating": 4.1, "reviews": 957, "placeId": "ChIJ8-e1dwDjLj4Rc3_iIGpvZ1o"}, {"id": "r-e07", "brand": "إكسترا", "title": "إكسترا - غرناطة", "neighborhood": "غرناطة", "lat": 24.7835731, "lng": 46.7299228, "rating": 3.9, "reviews": 6772, "placeId": "ChIJr-fXIsD9Lj4R1f6pwjdkFwY"}, {"id": "r-e08", "brand": "إكسترا", "title": "إكسترا - النسيم الغربي", "neighborhood": "النسيم الغربي", "lat": 24.7417794, "lng": 46.8069971, "rating": 3.7, "reviews": 7981, "placeId": "ChIJ8UVCKx4BLz4Ry5QKdq1EaSI"}, {"id": "r-e09", "brand": "إكسترا", "title": "إكسترا - الفاروق", "neighborhood": "الفاروق", "lat": 24.6631465, "lng": 46.7860538, "rating": 3.9, "reviews": 10386, "placeId": "ChIJ8cHJFQUCLz4R-wQ-x0UsRJw"}, {"id": "r-e10", "brand": "إكسترا", "title": "إكسترا - الحمراء", "neighborhood": "الحمراء", "lat": 24.7708764, "lng": 46.7654464, "rating": 3.7, "reviews": 5320, "placeId": "ChIJ_TglPucBLz4Ret8AqlvAdcQ"}, {"id": "r-s001", "brand": "ستاربكس", "title": "ستاربكس - Western Ring Branch Rd - Salam Mall", "neighborhood": "الزهرة", "lat": 24.559045, "lng": 46.63789, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s002", "brand": "ستاربكس", "title": "ستاربكس - AL Suwaidi DT", "neighborhood": "السويدي", "lat": 24.5987818, "lng": 46.6926029, "rating": null, "reviews": 600, "placeId": null, "source": "official_site"}, {"id": "r-s003", "brand": "ستاربكس", "title": "ستاربكس - Adnoc Juhi Abi Bakr", "neighborhood": "الياسمين", "lat": 24.8162583, "lng": 46.666447, "rating": null, "reviews": 163, "placeId": null, "source": "official_site"}, {"id": "r-s004", "brand": "ستاربكس", "title": "ستاربكس - Ajlan & Bros - العليا", "neighborhood": "العليا", "lat": 24.687568, "lng": 46.686883, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s005", "brand": "ستاربكس", "title": "ستاربكس - Al Araba-Tahliya", "neighborhood": "العليا", "lat": 24.7014002, "lng": 46.6963208, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s006", "brand": "ستاربكس", "title": "ستاربكس - Al Drees Gas DT", "neighborhood": "الربوة", "lat": 24.678181, "lng": 46.772221, "rating": null, "reviews": 491, "placeId": null, "source": "official_site"}, {"id": "r-s007", "brand": "ستاربكس", "title": "ستاربكس - Al Ehsa Street", "neighborhood": "الزهراء", "lat": 24.6881893, "lng": 46.7327904, "rating": null, "reviews": 2549, "placeId": null, "source": "official_site"}, {"id": "r-s008", "brand": "ستاربكس", "title": "ستاربكس - Al Faleh", "neighborhood": "العليا", "lat": 24.704945, "lng": 46.679131, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s009", "brand": "ستاربكس", "title": "ستاربكس - Al Hamra Mall", "neighborhood": "الملك فيصل", "lat": 24.7739971, "lng": 46.7763023, "rating": null, "reviews": 134, "placeId": null, "source": "official_site"}, {"id": "r-s010", "brand": "ستاربكس", "title": "ستاربكس - Al Hamra Plaza", "neighborhood": "المنصورة", "lat": 24.60415605, "lng": 46.73249764, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s011", "brand": "ستاربكس", "title": "ستاربكس - Al Hussain Ibn Ali", "neighborhood": "التعاون", "lat": 24.772058, "lng": 46.698181, "rating": null, "reviews": 897, "placeId": null, "source": "official_site"}, {"id": "r-s012", "brand": "ستاربكس", "title": "ستاربكس - Al Imam Muslim Rd DT", "neighborhood": "بدر", "lat": 24.5365709, "lng": 46.693249, "rating": null, "reviews": 547, "placeId": null, "source": "official_site"}, {"id": "r-s013", "brand": "ستاربكس", "title": "ستاربكس - Al Janadriyahh DT", "neighborhood": "الخليج", "lat": 24.8153755, "lng": 46.8780063, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s014", "brand": "ستاربكس", "title": "ستاربكس - Al Khaima Mall", "neighborhood": "الريان", "lat": 24.7241494, "lng": 46.7758179, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s015", "brand": "ستاربكس", "title": "ستاربكس - Al Khair Mall", "neighborhood": "الملقا", "lat": 24.7897722, "lng": 46.6115376, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s016", "brand": "ستاربكس", "title": "ستاربكس - Al Maather Plaza", "neighborhood": "المربع", "lat": 24.6639086, "lng": 46.6832108, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s017", "brand": "ستاربكس", "title": "ستاربكس - Al Munisyah DT", "neighborhood": "اليرموك", "lat": 24.8140547, "lng": 46.77062671, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s018", "brand": "ستاربكس", "title": "ستاربكس - Al Mursilat DT", "neighborhood": "حي الملك سلمان", "lat": 24.749508, "lng": 46.699917, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s019", "brand": "ستاربكس", "title": "ستاربكس - Al Nakheel Mall", "neighborhood": "المغرزات", "lat": 24.767635, "lng": 46.714971, "rating": null, "reviews": 421, "placeId": null, "source": "official_site"}, {"id": "r-s020", "brand": "ستاربكس", "title": "ستاربكس - Al Nakhlah Plaza", "neighborhood": "قرطبة", "lat": 24.8093689, "lng": 46.7350325, "rating": null, "reviews": 2353, "placeId": null, "source": "official_site"}, {"id": "r-s021", "brand": "ستاربكس", "title": "ستاربكس - Al Othaim Mall - Kharis", "neighborhood": "النسيم الشرقي", "lat": 24.7505277, "lng": 46.821631, "rating": null, "reviews": 435, "placeId": null, "source": "official_site"}, {"id": "r-s022", "brand": "ستاربكس", "title": "ستاربكس - Al Othaim Mall-Rabwa", "neighborhood": "الربوة", "lat": 24.68541778, "lng": 46.77581681, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s023", "brand": "ستاربكس", "title": "ستاربكس - Al Qadisiyah Alyasmin DT", "neighborhood": "الصحافة", "lat": 24.8322165, "lng": 46.649638, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s024", "brand": "ستاربكس", "title": "ستاربكس - Al Qasr Mall", "neighborhood": "السويدي", "lat": 24.600466, "lng": 46.697815, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s025", "brand": "ستاربكس", "title": "ستاربكس - Al Saadah Square DT", "neighborhood": "النسيم الغربي", "lat": 24.6998855, "lng": 46.8360695, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s026", "brand": "ستاربكس", "title": "ستاربكس - Al Thager plaza-Jarir", "neighborhood": "حطين", "lat": 24.7520888, "lng": 46.5838822, "rating": null, "reviews": 1651, "placeId": null, "source": "official_site"}, {"id": "r-s027", "brand": "ستاربكس", "title": "ستاربكس - Al Thoumamah Rd DT 1", "neighborhood": "المونسية", "lat": 24.8428504, "lng": 46.751648, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s028", "brand": "ستاربكس", "title": "ستاربكس - Al Thoumamah Rd DT 2", "neighborhood": "غرناطة", "lat": 24.785502, "lng": 46.751937, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s029", "brand": "ستاربكس", "title": "ستاربكس - Al Waha Plaza", "neighborhood": "الخليج", "lat": 24.785945, "lng": 46.799002, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s030", "brand": "ستاربكس", "title": "ستاربكس - Al Wahah DT", "neighborhood": "حي الملك سلمان", "lat": 24.737848, "lng": 46.706841, "rating": null, "reviews": 430, "placeId": null, "source": "official_site"}, {"id": "r-s031", "brand": "ستاربكس", "title": "ستاربكس - AlMunsiyah", "neighborhood": "المونسية", "lat": 24.8249855, "lng": 46.7499613, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s032", "brand": "ستاربكس", "title": "ستاربكس - Alderess Station DT", "neighborhood": "العقيق", "lat": 24.780088, "lng": 46.636866, "rating": null, "reviews": 326, "placeId": null, "source": "official_site"}, {"id": "r-s033", "brand": "ستاربكس", "title": "ستاربكس - Alia Plaza", "neighborhood": "الربيع", "lat": 24.8088552, "lng": 46.6688168, "rating": null, "reviews": 1577, "placeId": null, "source": "official_site"}, {"id": "r-s034", "brand": "ستاربكس", "title": "ستاربكس - Alyasmin Thumamah Rd", "neighborhood": "الياسمين", "lat": 24.8069283, "lng": 46.6603077, "rating": null, "reviews": 371, "placeId": null, "source": "official_site"}, {"id": "r-s035", "brand": "ستاربكس", "title": "ستاربكس - Amanat Al Riyadh", "neighborhood": "الديرة", "lat": 24.628694, "lng": 46.710417, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s036", "brand": "ستاربكس", "title": "ستاربكس - An Nasr Road DT", "neighborhood": "المنصورة", "lat": 24.5861837, "lng": 46.7591053, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s037", "brand": "ستاربكس", "title": "ستاربكس - Arcadia Square", "neighborhood": "العليا", "lat": 24.674347, "lng": 46.668555, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s038", "brand": "ستاربكس", "title": "ستاربكس - Atyaf Mall", "neighborhood": "اليرموك", "lat": 24.793893, "lng": 46.7669655, "rating": null, "reviews": 638, "placeId": null, "source": "official_site"}, {"id": "r-s039", "brand": "ستاربكس", "title": "ستاربكس - Boulevard 2030", "neighborhood": "القيروان", "lat": 24.828738, "lng": 46.571069, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s040", "brand": "ستاربكس", "title": "ستاربكس - Boulevard City", "neighborhood": "حطين", "lat": 24.7683276, "lng": 46.6054796, "rating": null, "reviews": 90, "placeId": null, "source": "official_site"}, {"id": "r-s041", "brand": "ستاربكس", "title": "ستاربكس - Boulevard World - Spain", "neighborhood": "حطين", "lat": 24.777513, "lng": 46.599216, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s042", "brand": "ستاربكس", "title": "ستاربكس - Business Gate North", "neighborhood": "قرطبة", "lat": 24.807675, "lng": 46.716439, "rating": null, "reviews": 299, "placeId": null, "source": "official_site"}, {"id": "r-s043", "brand": "ستاربكس", "title": "ستاربكس - Bustan Centre", "neighborhood": "العليا", "lat": 24.689154, "lng": 46.67393, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s044", "brand": "ستاربكس", "title": "ستاربكس - Centro Anas bin malek", "neighborhood": "الصحافة", "lat": 24.8220505, "lng": 46.6497121, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s045", "brand": "ستاربكس", "title": "ستاربكس - Centro Nakheel", "neighborhood": "حطين", "lat": 24.7418175, "lng": 46.6036314, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s046", "brand": "ستاربكس", "title": "ستاربكس - Centro Yasmin DT", "neighborhood": "النرجس", "lat": 24.8580611, "lng": 46.6461134, "rating": null, "reviews": 1812, "placeId": null, "source": "official_site"}, {"id": "r-s047", "brand": "ستاربكس", "title": "ستاربكس - Dallah Hospitals - النخيل", "neighborhood": "المحمدية", "lat": 24.747539, "lng": 46.652062, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s048", "brand": "ستاربكس", "title": "ستاربكس - Derab Land", "neighborhood": "العريجاء", "lat": 24.5373, "lng": 46.6385, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s049", "brand": "ستاربكس", "title": "ستاربكس - Dirab Branch Rd DT", "neighborhood": "الشفا", "lat": 24.5783677, "lng": 46.7017297, "rating": null, "reviews": 422, "placeId": null, "source": "official_site"}, {"id": "r-s050", "brand": "ستاربكس", "title": "ستاربكس - East Boulevard Plaza DT", "neighborhood": "القدس", "lat": 24.757824, "lng": 46.760374, "rating": null, "reviews": 564, "placeId": null, "source": "official_site"}, {"id": "r-s051", "brand": "ستاربكس", "title": "ستاربكس - Eastern Ring Rd DT - Rawda", "neighborhood": "الروضة", "lat": 24.7347514, "lng": 46.7521687, "rating": null, "reviews": 1572, "placeId": null, "source": "official_site"}, {"id": "r-s052", "brand": "ستاربكس", "title": "ستاربكس - Ebdaa Tower", "neighborhood": "العليا", "lat": 24.6921, "lng": 46.6812, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s053", "brand": "ستاربكس", "title": "ستاربكس - Elegant Centre DT", "neighborhood": "الملز", "lat": 24.6625896, "lng": 46.7297514, "rating": null, "reviews": 3201, "placeId": null, "source": "official_site"}, {"id": "r-s054", "brand": "ستاربكس", "title": "ستاربكس - Euromarche Takhassusi", "neighborhood": "الملك عبدالله", "lat": 24.7517059, "lng": 46.7223191, "rating": null, "reviews": 563, "placeId": null, "source": "official_site"}, {"id": "r-s055", "brand": "ستاربكس", "title": "ستاربكس - Four Seasons - Kingdom Tower", "neighborhood": "العليا", "lat": 24.7113514, "lng": 46.6743817, "rating": null, "reviews": 296, "placeId": null, "source": "official_site"}, {"id": "r-s056", "brand": "ستاربكس", "title": "ستاربكس - Fraser Suites Hotel", "neighborhood": "العليا", "lat": 24.6788, "lng": 46.6912, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s057", "brand": "ستاربكس", "title": "ستاربكس - Fuel Station Saud Shenaifi DT", "neighborhood": "العزيزية", "lat": 24.611094, "lng": 46.707447, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s058", "brand": "ستاربكس", "title": "ستاربكس - GACA HQ", "neighborhood": "العليا", "lat": 24.7135517, "lng": 46.6752957, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s059", "brand": "ستاربكس", "title": "ستاربكس - Granada Mall", "neighborhood": "غرناطة", "lat": 24.782574, "lng": 46.7304947, "rating": null, "reviews": 1836, "placeId": null, "source": "official_site"}, {"id": "r-s060", "brand": "ستاربكس", "title": "ستاربكس - Granada Mall - Ground", "neighborhood": "غرناطة", "lat": 24.7814101, "lng": 46.7301571, "rating": null, "reviews": 1836, "placeId": null, "source": "official_site"}, {"id": "r-s061", "brand": "ستاربكس", "title": "ستاربكس - Granada Mall - extension", "neighborhood": "غرناطة", "lat": 24.781717, "lng": 46.730871, "rating": null, "reviews": 1836, "placeId": null, "source": "official_site"}, {"id": "r-s062", "brand": "ستاربكس", "title": "ستاربكس - Granada Plaza", "neighborhood": "اليرموك", "lat": 24.7901352, "lng": 46.76586848, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s063", "brand": "ستاربكس", "title": "ستاربكس - Granada Square DT", "neighborhood": "غرناطة", "lat": 24.790733, "lng": 46.740697, "rating": null, "reviews": 382, "placeId": null, "source": "official_site"}, {"id": "r-s064", "brand": "ستاربكس", "title": "ستاربكس - Green Oasis", "neighborhood": "المونسية", "lat": 24.8428021, "lng": 46.753649, "rating": null, "reviews": 2438, "placeId": null, "source": "official_site"}, {"id": "r-s065", "brand": "ستاربكس", "title": "ستاربكس - Hamad Mall", "neighborhood": "النفل", "lat": 24.7835202, "lng": 46.6620799, "rating": null, "reviews": 535, "placeId": null, "source": "official_site"}, {"id": "r-s066", "brand": "ستاربكس", "title": "ستاربكس - Hamzah Ibn Abd Al Mouttaleb DT", "neighborhood": "السويدي", "lat": 24.573827, "lng": 46.634701, "rating": null, "reviews": 440, "placeId": null, "source": "official_site"}, {"id": "r-s067", "brand": "ستاربكس", "title": "ستاربكس - Hassan Bin Thabet Rd DT", "neighborhood": "النسيم الشرقي", "lat": 24.730412, "lng": 46.835131, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s068", "brand": "ستاربكس", "title": "ستاربكس - Hayat Mall SBX-2", "neighborhood": "الملك فهد", "lat": 24.74313, "lng": 46.68021, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s069", "brand": "ستاربكس", "title": "ستاربكس - Hayatt Mall", "neighborhood": "الملك فهد", "lat": 24.742735, "lng": 46.6799489, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s070", "brand": "ستاربكس", "title": "ستاربكس - Hazm Plaza DT - Dirab", "neighborhood": "العريجاء", "lat": 24.504291, "lng": 46.632416, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s071", "brand": "ستاربكس", "title": "ستاربكس - Hokair time - King Salman", "neighborhood": "الملقا", "lat": 24.8208847, "lng": 46.6018867, "rating": null, "reviews": 1003, "placeId": null, "source": "official_site"}, {"id": "r-s072", "brand": "ستاربكس", "title": "ستاربكس - Home Mart", "neighborhood": "الملك فهد", "lat": 24.73049, "lng": 46.671662, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s073", "brand": "ستاربكس", "title": "ستاربكس - IBN Taymeeyah Rd DT", "neighborhood": "بدر", "lat": 24.54657, "lng": 46.69518, "rating": null, "reviews": 425, "placeId": null, "source": "official_site"}, {"id": "r-s074", "brand": "ستاربكس", "title": "ستاربكس - ITCC Road 01", "neighborhood": "جامعة الملك سعود", "lat": 24.7404098, "lng": 46.6338005, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s075", "brand": "ستاربكس", "title": "ستاربكس - Imam Saud Road Land DT", "neighborhood": "الملك فهد", "lat": 24.7549606, "lng": 46.6816698, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s076", "brand": "ستاربكس", "title": "ستاربكس - Imam Shafie Al Manar Sq", "neighborhood": "المنار", "lat": 24.7279123, "lng": 46.7842534, "rating": null, "reviews": 528, "placeId": null, "source": "official_site"}, {"id": "r-s077", "brand": "ستاربكس", "title": "ستاربكس - Interval - Takhassusi", "neighborhood": "العليا", "lat": 24.713866, "lng": 46.66149, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s078", "brand": "ستاربكس", "title": "ستاربكس - Irqa Plaza", "neighborhood": "عرقة", "lat": 24.6941693, "lng": 46.6074157, "rating": null, "reviews": 1676, "placeId": null, "source": "official_site"}, {"id": "r-s079", "brand": "ستاربكس", "title": "ستاربكس - Ishbiliya Exit 9 DT", "neighborhood": "اشبيلية", "lat": 24.8069585, "lng": 46.8053188, "rating": null, "reviews": 354, "placeId": null, "source": "official_site"}, {"id": "r-s080", "brand": "ستاربكس", "title": "ستاربكس - Jarir Bookstore Khurais", "neighborhood": "النهضة", "lat": 24.7579683, "lng": 46.8300906, "rating": null, "reviews": 640, "placeId": null, "source": "official_site"}, {"id": "r-s081", "brand": "ستاربكس", "title": "ستاربكس - Jarir Bookstore King Abdulaziz", "neighborhood": "حي الملك سلمان", "lat": 24.7328914, "lng": 46.6876067, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s082", "brand": "ستاربكس", "title": "ستاربكس - Jarir Umar Ibn Abdulaziz", "neighborhood": "الربوة", "lat": 24.6916141, "lng": 46.765661, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s083", "brand": "ستاربكس", "title": "ستاربكس - Jarir Exit 10", "neighborhood": "الحمراء", "lat": 24.7671108, "lng": 46.7560272, "rating": null, "reviews": 2018, "placeId": null, "source": "official_site"}, {"id": "r-s084", "brand": "ستاربكس", "title": "ستاربكس - Jarir Exit 11", "neighborhood": "الروضة", "lat": 24.7310565, "lng": 46.7541373, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s085", "brand": "ستاربكس", "title": "ستاربكس - Jarir Exit 25", "neighborhood": "شبرا", "lat": 24.5694441, "lng": 46.6626859, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s086", "brand": "ستاربكس", "title": "ستاربكس - Jarir Exit 7", "neighborhood": "النرجس", "lat": 24.817936, "lng": 46.686779, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s087", "brand": "ستاربكس", "title": "ستاربكس - Jarir Khorais", "neighborhood": "الريان", "lat": 24.722205, "lng": 46.775177, "rating": null, "reviews": 3231, "placeId": null, "source": "official_site"}, {"id": "r-s088", "brand": "ستاربكس", "title": "ستاربكس - Jarir North Ring Exit 5", "neighborhood": "المروج", "lat": 24.7725663, "lng": 46.6728669, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s089", "brand": "ستاربكس", "title": "ستاربكس - Jazeera Market Al Ghadeer", "neighborhood": "الغدير", "lat": 24.7727919, "lng": 46.654981, "rating": null, "reviews": 1025, "placeId": null, "source": "official_site"}, {"id": "r-s090", "brand": "ستاربكس", "title": "ستاربكس - Jazeera Market Sulimaniya", "neighborhood": "العليا", "lat": 24.7065, "lng": 46.6889, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s091", "brand": "ستاربكس", "title": "ستاربكس - KAFD Innovation zone", "neighborhood": "العقيق", "lat": 24.77035657, "lng": 46.64147114, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s092", "brand": "ستاربكس", "title": "ستاربكس - KKIA T1 Arrivals", "neighborhood": "مطار الملك خالد", "lat": 24.96251498, "lng": 46.70068481, "rating": null, "reviews": 819, "placeId": null, "source": "official_site"}, {"id": "r-s093", "brand": "ستاربكس", "title": "ستاربكس - KKIA T4 Departure", "neighborhood": "مطار الملك خالد", "lat": 24.9559434, "lng": 46.7058065, "rating": null, "reviews": 320, "placeId": null, "source": "official_site"}, {"id": "r-s094", "brand": "ستاربكس", "title": "ستاربكس - Kayan Square Anas DT", "neighborhood": "النرجس", "lat": 24.83569, "lng": 46.6823083, "rating": null, "reviews": 959, "placeId": null, "source": "official_site"}, {"id": "r-s095", "brand": "ستاربكس", "title": "ستاربكس - King Abdallah Rd DT - Mughrizat", "neighborhood": "المغرزات", "lat": 24.758513, "lng": 46.734594, "rating": null, "reviews": 1168, "placeId": null, "source": "official_site"}, {"id": "r-s096", "brand": "ستاربكس", "title": "ستاربكس - King Abdulaziz Rd Al Arid", "neighborhood": "العارض", "lat": 24.8460553, "lng": 46.6303434, "rating": null, "reviews": 375, "placeId": null, "source": "official_site"}, {"id": "r-s097", "brand": "ستاربكس", "title": "ستاربكس - King Abdulaziz DT", "neighborhood": "حي الملك سلمان", "lat": 24.7160299, "lng": 46.6956352, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s098", "brand": "ستاربكس", "title": "ستاربكس - KAFD", "neighborhood": "حطين", "lat": 24.7612124, "lng": 46.640138, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s099", "brand": "ستاربكس", "title": "ستاربكس - King Abdullah Rd", "neighborhood": "الخليج", "lat": 24.7955256, "lng": 46.8169169, "rating": null, "reviews": 110, "placeId": null, "source": "official_site"}, {"id": "r-s100", "brand": "ستاربكس", "title": "ستاربكس - King Abdullah Rd East", "neighborhood": "الحمراء", "lat": 24.7715352, "lng": 46.7695277, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s101", "brand": "ستاربكس", "title": "ستاربكس - King Abdullah Rd Land DT - Hamra", "neighborhood": "الحمراء", "lat": 24.77146, "lng": 46.76711, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s102", "brand": "ستاربكس", "title": "ستاربكس - King Fahad Branch Rd - Murabbah", "neighborhood": "المربع", "lat": 24.64617, "lng": 46.703401, "rating": null, "reviews": 1095, "placeId": null, "source": "official_site"}, {"id": "r-s103", "brand": "ستاربكس", "title": "ستاربكس - King Fahad Rd DT - Sahafa", "neighborhood": "الصحافة", "lat": 24.8048354, "lng": 46.625713, "rating": null, "reviews": 733, "placeId": null, "source": "official_site"}, {"id": "r-s104", "brand": "ستاربكس", "title": "ستاربكس - King Fahd Rd DT - Al Arid", "neighborhood": "العارض", "lat": 24.851784, "lng": 46.602177, "rating": null, "reviews": 863, "placeId": null, "source": "official_site"}, {"id": "r-s105", "brand": "ستاربكس", "title": "ستاربكس - King Khaled Domestic Airport", "neighborhood": "مطار الملك خالد", "lat": 24.941764, "lng": 46.711056, "rating": null, "reviews": 1370, "placeId": null, "source": "official_site"}, {"id": "r-s106", "brand": "ستاربكس", "title": "ستاربكس - King Khalid Hospital", "neighborhood": "الرائد", "lat": 24.712099, "lng": 46.622602, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s107", "brand": "ستاربكس", "title": "ستاربكس - KKIA Executive T5", "neighborhood": "مطار الملك خالد", "lat": 24.9410212, "lng": 46.713524, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s108", "brand": "ستاربكس", "title": "ستاربكس - KKIA T3 Arrival", "neighborhood": "مطار الملك خالد", "lat": 24.958704, "lng": 46.704521, "rating": null, "reviews": 514, "placeId": null, "source": "official_site"}, {"id": "r-s109", "brand": "ستاربكس", "title": "ستاربكس - KKIA T3 Departure Airside", "neighborhood": "مطار الملك خالد", "lat": 24.9585675, "lng": 46.7039846, "rating": null, "reviews": 514, "placeId": null, "source": "official_site"}, {"id": "r-s110", "brand": "ستاربكس", "title": "ستاربكس - King Salman Central Library", "neighborhood": "الرائد", "lat": 24.7183189, "lng": 46.6197538, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s111", "brand": "ستاربكس", "title": "ستاربكس - King Salman Rd Al Qairawan DT", "neighborhood": "الملقا", "lat": 24.8210056, "lng": 46.5996473, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s112", "brand": "ستاربكس", "title": "ستاربكس - KSU Building 25", "neighborhood": "جامعة الملك سعود", "lat": 24.7293617, "lng": 46.6248323, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s113", "brand": "ستاربكس", "title": "ستاربكس - Louloua Building", "neighborhood": "العليا", "lat": 24.6988, "lng": 46.6899, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s114", "brand": "ستاربكس", "title": "ستاربكس - M.H. Alshaya Office", "neighborhood": "قرطبة", "lat": 24.8080401, "lng": 46.7166778, "rating": null, "reviews": 299, "placeId": null, "source": "official_site"}, {"id": "r-s115", "brand": "ستاربكس", "title": "ستاربكس - Magrabi Hospital Exit 14", "neighborhood": "الربوة", "lat": 24.7040641, "lng": 46.7698699, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s116", "brand": "ستاربكس", "title": "ستاربكس - Magrabi Medical Ghirnatah", "neighborhood": "غرناطة", "lat": 24.7828957, "lng": 46.7453452, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s117", "brand": "ستاربكس", "title": "ستاربكس - Marvella Plaza", "neighborhood": "الملك فيصل", "lat": 24.7746336, "lng": 46.7743953, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s118", "brand": "ستاربكس", "title": "ستاربكس - Masif DT", "neighborhood": "المصيف", "lat": 24.7633483, "lng": 46.6929708, "rating": null, "reviews": 1289, "placeId": null, "source": "official_site"}, {"id": "r-s119", "brand": "ستاربكس", "title": "ستاربكس - Mateen Plaza", "neighborhood": "النفل", "lat": 24.7898034, "lng": 46.6589956, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s120", "brand": "ستاربكس", "title": "ستاربكس - Mode Mall - العليا", "neighborhood": "العليا", "lat": 24.6896, "lng": 46.6855, "rating": null, "reviews": 783, "placeId": null, "source": "official_site"}, {"id": "r-s121", "brand": "ستاربكس", "title": "ستاربكس - Mughrizat Plaza", "neighborhood": "المغرزات", "lat": 24.7617018, "lng": 46.7222504, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s122", "brand": "ستاربكس", "title": "ستاربكس - Mughrizat Plaza Exit 9 DT", "neighborhood": "المغرزات", "lat": 24.771575, "lng": 46.720633, "rating": null, "reviews": 376, "placeId": null, "source": "official_site"}, {"id": "r-s123", "brand": "ستاربكس", "title": "ستاربكس - Nadah Plaza", "neighborhood": "الندى", "lat": 24.805721, "lng": 46.693287, "rating": null, "reviews": 936, "placeId": null, "source": "official_site"}, {"id": "r-s124", "brand": "ستاربكس", "title": "ستاربكس - Najd Street DT", "neighborhood": "العريجاء", "lat": 24.63122627, "lng": 46.56408866, "rating": null, "reviews": 883, "placeId": null, "source": "official_site"}, {"id": "r-s125", "brand": "ستاربكس", "title": "ستاربكس - Najm Ad Din Al Ayyubi Tuwaiq", "neighborhood": "طويق", "lat": 24.5543423, "lng": 46.5115557, "rating": null, "reviews": 937, "placeId": null, "source": "official_site"}, {"id": "r-s126", "brand": "ستاربكس", "title": "ستاربكس - Najm Eldin Road DT", "neighborhood": "الزهرة", "lat": 24.5529239, "lng": 46.634202, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s127", "brand": "ستاربكس", "title": "ستاربكس - Najrs Square DT", "neighborhood": "النرجس", "lat": 24.8511247, "lng": 46.6738798, "rating": null, "reviews": 1057, "placeId": null, "source": "official_site"}, {"id": "r-s128", "brand": "ستاربكس", "title": "ستاربكس - Nakheel Mall 2", "neighborhood": "المغرزات", "lat": 24.765152, "lng": 46.7157758, "rating": null, "reviews": 306, "placeId": null, "source": "official_site"}, {"id": "r-s129", "brand": "ستاربكس", "title": "ستاربكس - North Industry DT - Qirawan", "neighborhood": "القيروان", "lat": 24.8523915, "lng": 46.5787885, "rating": null, "reviews": 664, "placeId": null, "source": "official_site"}, {"id": "r-s130", "brand": "ستاربكس", "title": "ستاربكس - Northern Ring Rd DT - Masiaf", "neighborhood": "المصيف", "lat": 24.7704852, "lng": 46.6714542, "rating": null, "reviews": 769, "placeId": null, "source": "official_site"}, {"id": "r-s131", "brand": "ستاربكس", "title": "ستاربكس - Olayan Plaza", "neighborhood": "الوادي", "lat": 24.7839, "lng": 46.7001, "rating": null, "reviews": 1914, "placeId": null, "source": "official_site"}, {"id": "r-s132", "brand": "ستاربكس", "title": "ستاربكس - Oruba Square DT", "neighborhood": "أم الحمام الغربي", "lat": 24.7023471, "lng": 46.6506573, "rating": null, "reviews": 2304, "placeId": null, "source": "official_site"}, {"id": "r-s133", "brand": "ستاربكس", "title": "ستاربكس - Oruba Street", "neighborhood": "العليا", "lat": 24.714894, "lng": 46.6778172, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s134", "brand": "ستاربكس", "title": "ستاربكس - Othman Bin Afan ST", "neighborhood": "الوادي", "lat": 24.796085, "lng": 46.6982851, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s135", "brand": "ستاربكس", "title": "ستاربكس - Oud Square", "neighborhood": "عرقة", "lat": 24.6754786, "lng": 46.6247847, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s136", "brand": "ستاربكس", "title": "ستاربكس - Oxygen Gym", "neighborhood": "حطين", "lat": 24.7628448, "lng": 46.6238678, "rating": null, "reviews": 193, "placeId": null, "source": "official_site"}, {"id": "r-s137", "brand": "ستاربكس", "title": "ستاربكس - PNU S1 DT", "neighborhood": "مطار الملك خالد", "lat": 24.850342, "lng": 46.711431, "rating": null, "reviews": 186, "placeId": null, "source": "official_site"}, {"id": "r-s138", "brand": "ستاربكس", "title": "ستاربكس - Panorama Mall", "neighborhood": "العليا", "lat": 24.692596, "lng": 46.669427, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s139", "brand": "ستاربكس", "title": "ستاربكس - Parisiana Complex", "neighborhood": "السويدي", "lat": 24.595814, "lng": 46.697872, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s140", "brand": "ستاربكس", "title": "ستاربكس - Prince Bandar Rd DT", "neighborhood": "الخليج", "lat": 24.775439, "lng": 46.82062, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s141", "brand": "ستاربكس", "title": "ستاربكس - Prince Mohammed Hospital", "neighborhood": "المنار", "lat": 24.708083, "lng": 46.793667, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s142", "brand": "ستاربكس", "title": "ستاربكس - Prince Mohammed Ibn Salman Rd DT", "neighborhood": "حطين", "lat": 24.772391, "lng": 46.625871, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s143", "brand": "ستاربكس", "title": "ستاربكس - PNU Library", "neighborhood": "مطار الملك خالد", "lat": 24.846579, "lng": 46.724129, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s144", "brand": "ستاربكس", "title": "ستاربكس - PNU Management", "neighborhood": "مطار الملك خالد", "lat": 24.84553, "lng": 46.725006, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s145", "brand": "ستاربكس", "title": "ستاربكس - Qairwan Gate DT", "neighborhood": "القيروان", "lat": 24.8301039, "lng": 46.5998172, "rating": null, "reviews": 446, "placeId": null, "source": "official_site"}, {"id": "r-s146", "brand": "ستاربكس", "title": "ستاربكس - Qurtuba Plaza DT", "neighborhood": "قرطبة", "lat": 24.8156215, "lng": 46.7284652, "rating": null, "reviews": 846, "placeId": null, "source": "official_site"}, {"id": "r-s147", "brand": "ستاربكس", "title": "ستاربكس - Qurtubah Dammam Rd DT", "neighborhood": "الخليج", "lat": 24.8043498, "lng": 46.8201284, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s148", "brand": "ستاربكس", "title": "ستاربكس - Rabea Plaza DT", "neighborhood": "النفل", "lat": 24.7924724, "lng": 46.6732334, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s149", "brand": "ستاربكس", "title": "ستاربكس - Rabwa Plaza", "neighborhood": "الربوة", "lat": 24.6923294, "lng": 46.7649726, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s150", "brand": "ستاربكس", "title": "ستاربكس - Rabwa Square", "neighborhood": "الربوة", "lat": 24.6887, "lng": 46.753031, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s151", "brand": "ستاربكس", "title": "ستاربكس - Raden Center Olaya", "neighborhood": "الملك فهد", "lat": 24.7477443, "lng": 46.6584252, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s152", "brand": "ستاربكس", "title": "ستاربكس - Rakaa Plaza", "neighborhood": "القادسية", "lat": 24.817979, "lng": 46.80306, "rating": null, "reviews": 1250, "placeId": null, "source": "official_site"}, {"id": "r-s153", "brand": "ستاربكس", "title": "ستاربكس - Riyadh Bank Tower Olaya", "neighborhood": "العليا", "lat": 24.7125858, "lng": 46.676319, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s154", "brand": "ستاربكس", "title": "ستاربكس - Riyadh Boulevard 2", "neighborhood": "حطين", "lat": 24.7681353, "lng": 46.605585, "rating": null, "reviews": 130, "placeId": null, "source": "official_site"}, {"id": "r-s155", "brand": "ستاربكس", "title": "ستاربكس - Riyadh Century Corner", "neighborhood": "العليا", "lat": 24.701473, "lng": 46.676802, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s156", "brand": "ستاربكس", "title": "ستاربكس - Riyadh Front", "neighborhood": "المونسية", "lat": 24.838944, "lng": 46.731417, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s157", "brand": "ستاربكس", "title": "ستاربكس - Riyadh Front Gate 5", "neighborhood": "المونسية", "lat": 24.844394, "lng": 46.733177, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s158", "brand": "ستاربكس", "title": "ستاربكس - Riyadh Gallery 1st", "neighborhood": "المحمدية", "lat": 24.7516885, "lng": 46.6469217, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s159", "brand": "ستاربكس", "title": "ستاربكس - Riyadh Park - Cheese Cake", "neighborhood": "حطين", "lat": 24.7573345, "lng": 46.6283217, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s160", "brand": "ستاربكس", "title": "ستاربكس - Robeen Plaza", "neighborhood": "حطين", "lat": 24.752684, "lng": 46.625534, "rating": null, "reviews": 1627, "placeId": null, "source": "official_site"}, {"id": "r-s161", "brand": "ستاربكس", "title": "ستاربكس - SASCO Airport Road DT", "neighborhood": "مطار الملك خالد", "lat": 24.889528, "lng": 46.692972, "rating": null, "reviews": 1462, "placeId": null, "source": "official_site"}, {"id": "r-s162", "brand": "ستاربكس", "title": "ستاربكس - SASCO Dirab Plaza DT", "neighborhood": "العريجاء", "lat": 24.544322, "lng": 46.6635036, "rating": null, "reviews": 302, "placeId": null, "source": "official_site"}, {"id": "r-s163", "brand": "ستاربكس", "title": "ستاربكس - STC Building 11 HQ", "neighborhood": "المصيف", "lat": 24.7540728, "lng": 46.6871398, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s164", "brand": "ستاربكس", "title": "ستاربكس - Saad Square", "neighborhood": "حطين", "lat": 24.7675, "lng": 46.5767, "rating": null, "reviews": 2371, "placeId": null, "source": "official_site"}, {"id": "r-s165", "brand": "ستاربكس", "title": "ستاربكس - Sabb Tower", "neighborhood": "الملقا", "lat": 24.8223902, "lng": 46.6175673, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s166", "brand": "ستاربكس", "title": "ستاربكس - Safarat Diplomatic Quarter", "neighborhood": "عرقة", "lat": 24.6734719, "lng": 46.6232424, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s167", "brand": "ستاربكس", "title": "ستاربكس - Sahafa Center Plaza", "neighborhood": "الصحافة", "lat": 24.812108, "lng": 46.624539, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s168", "brand": "ستاربكس", "title": "ستاربكس - Sahara Mall", "neighborhood": "الملك فهد", "lat": 24.7398821, "lng": 46.68208, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s169", "brand": "ستاربكس", "title": "ستاربكس - Sahara Mall King Fahd", "neighborhood": "الملك فهد", "lat": 24.7368045, "lng": 46.6837894, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s170", "brand": "ستاربكس", "title": "ستاربكس - Salman Al Farsi DT - Nahda", "neighborhood": "النهضة", "lat": 24.7545, "lng": 46.816444, "rating": null, "reviews": 2585, "placeId": null, "source": "official_site"}, {"id": "r-s171", "brand": "ستاربكس", "title": "ستاربكس - Santorini Shopping Mall", "neighborhood": "المحمدية", "lat": 24.741111, "lng": 46.6457663, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s172", "brand": "ستاربكس", "title": "ستاربكس - Sawary Plaza DT", "neighborhood": "الخليج", "lat": 24.815726, "lng": 46.878029, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s173", "brand": "ستاربكس", "title": "ستاربكس - Serwat Building", "neighborhood": "المحمدية", "lat": 24.7428447, "lng": 46.6558622, "rating": null, "reviews": 1083, "placeId": null, "source": "official_site"}, {"id": "r-s174", "brand": "ستاربكس", "title": "ستاربكس - Sharqi Avenue DT", "neighborhood": "الملك فيصل", "lat": 24.753333, "lng": 46.784028, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s175", "brand": "ستاربكس", "title": "ستاربكس - Sidra Mall", "neighborhood": "غرناطة", "lat": 24.7787431, "lng": 46.7333489, "rating": null, "reviews": 2347, "placeId": null, "source": "official_site"}, {"id": "r-s176", "brand": "ستاربكس", "title": "ستاربكس - Silver Plaza Riyadh", "neighborhood": "الخليج", "lat": 24.7899498, "lng": 46.8078333, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s177", "brand": "ستاربكس", "title": "ستاربكس - Southern Ring Rd DT - Namar", "neighborhood": "نمار", "lat": 24.5748889, "lng": 46.6775281, "rating": null, "reviews": 1888, "placeId": null, "source": "official_site"}, {"id": "r-s178", "brand": "ستاربكس", "title": "ستاربكس - Southern Ring Rd DT 2", "neighborhood": "شبرا", "lat": 24.5722365, "lng": 46.6709778, "rating": null, "reviews": 249, "placeId": null, "source": "official_site"}, {"id": "r-s179", "brand": "ستاربكس", "title": "ستاربكس - Sulaiman Alhabib Olaya", "neighborhood": "العليا", "lat": 24.7048618, "lng": 46.6766356, "rating": null, "reviews": 509, "placeId": null, "source": "official_site"}, {"id": "r-s180", "brand": "ستاربكس", "title": "ستاربكس - Sulaiman Habib Hospital", "neighborhood": "الريان", "lat": 24.721319, "lng": 46.774256, "rating": null, "reviews": 3231, "placeId": null, "source": "official_site"}, {"id": "r-s181", "brand": "ستاربكس", "title": "ستاربكس - Sulaiman Habib Swaidi", "neighborhood": "الزهرة", "lat": 24.5670614, "lng": 46.641304, "rating": null, "reviews": 1145, "placeId": null, "source": "official_site"}, {"id": "r-s182", "brand": "ستاربكس", "title": "ستاربكس - Tafaseel BP", "neighborhood": "العليا", "lat": 24.6949124, "lng": 46.6698309, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}, {"id": "r-s183", "brand": "ستاربكس", "title": "ستاربكس - Taif St DT", "neighborhood": "ظهرة لبن", "lat": 24.623676, "lng": 46.5142167, "rating": null, "reviews": 695, "placeId": null, "source": "official_site"}, {"id": "r-s184", "brand": "ستاربكس", "title": "ستاربكس - Taif St DT - Dhahrat Laban", "neighborhood": "ظهرة لبن", "lat": 24.6373809, "lng": 46.5374493, "rating": null, "reviews": 824, "placeId": null, "source": "official_site"}, {"id": "r-s185", "brand": "ستاربكس", "title": "ستاربكس - Takamul Plaza", "neighborhood": "حطين", "lat": 24.7529934, "lng": 46.6396939, "rating": null, "reviews": null, "placeId": null, "source": "official_site"}], "run_id_starbucks_expanded": "nUg7LU8muJRqpNKiU", "note_starbucks": "expanded Starbucks Riyadh on 2026-06-25 via broader Apify search (91 raw results merged, dedup by placeId).", "note_starbucks_official": "Replaced Starbucks with official starbucks.sa Riyadh list (183 branches). Reviews matched from prior Apify set where coords align (<=180m); rest reviews=null (unavailable)."}</script>
+<script type="application/json" id="data-suggested">{"layer": "suggested_sites", "basis": "high-review Starbucks/Jarir/eXtra clusters with no nearby Drive7", "params": {"min_reviews": 1000, "cluster_radius_km": 2.5, "exclude_drive7_km": 2.5}, "generated_at": "2026-06-25", "sites": [{"lat": 24.73649, "lng": 46.6847, "demand": 15650, "n": 2, "diversity": 2, "score": 23.5, "nd": 4.82, "brands": {"جرير": 1, "إكسترا": 1}, "hood": "الملك فهد", "rank": 1}, {"lat": 24.78249, "lng": 46.73004, "demand": 8608, "n": 2, "diversity": 2, "score": 12.9, "nd": 2.54, "brands": {"إكسترا": 1, "ستاربكس": 1}, "hood": "غرناطة", "rank": 2}, {"lat": 24.75638, "lng": 46.82339, "demand": 8346, "n": 2, "diversity": 2, "score": 12.5, "nd": 4.03, "brands": {"جرير": 1, "ستاربكس": 1}, "hood": "النهضة", "rank": 3}, {"lat": 24.70764, "lng": 46.64184, "demand": 7151, "n": 2, "diversity": 2, "score": 10.7, "nd": 4.65, "brands": {"إكسترا": 1, "ستاربكس": 1}, "hood": "الرائد", "rank": 4}, {"lat": 24.66315, "lng": 46.78605, "demand": 10386, "n": 1, "diversity": 1, "score": 10.4, "nd": 6.91, "brands": {"إكسترا": 1}, "hood": "الفاروق", "rank": 5}, {"lat": 24.60512, "lng": 46.70545, "demand": 8611, "n": 1, "diversity": 1, "score": 8.6, "nd": 9.27, "brands": {"إكسترا": 1}, "hood": "العزيزية", "rank": 6}, {"lat": 24.80665, "lng": 46.66301, "demand": 6984, "n": 1, "diversity": 1, "score": 7.0, "nd": 2.89, "brands": {"إكسترا": 1}, "hood": "الربيع", "rank": 7}, {"lat": 24.75974, "lng": 46.58032, "demand": 4100, "n": 2, "diversity": 2, "score": 6.1, "nd": 4.41, "brands": {"جرير": 1, "ستاربكس": 1}, "hood": "حطين", "rank": 8}]}</script>
+<script type="application/json" id="data-density">{"layer": "suggested_density", "basis": "highest count (presence) of Starbucks/Jarir/eXtra branches, no nearby Drive7", "params": {"cluster_radius_km": 2.5, "exclude_drive7_km": 2.5, "metric": "branch_count"}, "generated_at": "2026-06-25", "sites": [{"lat": 24.82328, "lng": 46.67827, "count": 3, "diversity": 2, "nd": 4.03, "brands": {"جرير": 1, "ستاربكس": 2}, "hood": "النرجس", "rank": 1}, {"lat": 24.54385, "lng": 46.69506, "count": 3, "diversity": 2, "nd": 7.47, "brands": {"إكسترا": 1, "ستاربكس": 2}, "hood": "بدر", "rank": 2}, {"lat": 24.75638, "lng": 46.82339, "count": 2, "diversity": 2, "nd": 4.03, "brands": {"جرير": 1, "ستاربكس": 1}, "hood": "النهضة", "rank": 3}, {"lat": 24.5708, "lng": 46.66666, "count": 2, "diversity": 2, "nd": 4.26, "brands": {"جرير": 1, "ستاربكس": 1}, "hood": "شبرا", "rank": 4}, {"lat": 24.86528, "lng": 46.64201, "count": 2, "diversity": 2, "nd": 6.66, "brands": {"جرير": 1, "ستاربكس": 1}, "hood": "العارض", "rank": 5}, {"lat": 24.75974, "lng": 46.58032, "count": 2, "diversity": 2, "nd": 4.41, "brands": {"جرير": 1, "ستاربكس": 1}, "hood": "حطين", "rank": 6}, {"lat": 24.63927, "lng": 46.70525, "count": 2, "diversity": 2, "nd": 11.56, "brands": {"جرير": 1, "ستاربكس": 1}, "hood": "الديرة", "rank": 7}, {"lat": 24.73649, "lng": 46.6847, "count": 2, "diversity": 2, "nd": 4.82, "brands": {"جرير": 1, "إكسترا": 1}, "hood": "الملك فهد", "rank": 8}]}</script>
+<script type="application/json" id="data-sbintel">{"layer": "starbucks_intel", "basis": "DENSITY on official Starbucks list (185 branches; airport excluded). Clusters=Starbucks within 1.5km. Score=branch_count × service-gap(nd/3, cap 3x). Opportunities=nearest Drive7>=2.5km. reviews_known = pooled reviews where coords matched prior data.", "params": {"cluster_km": 1.5, "min_gap_km": 2.5, "metric": "branch_count × gap"}, "generated_at": "2026-06-25", "sites": [{"hood": "العليا", "lat": 24.70132, "lng": 46.68035, "n": 19, "nd": 6.94, "reviews_known": 1588, "score": 43.97, "rank": 1}, {"hood": "الملك فهد", "lat": 24.75623, "lng": 46.68958, "n": 15, "nd": 3.53, "reviews_known": 5466, "score": 17.63, "rank": 2}, {"hood": "الخليج", "lat": 24.79394, "lng": 46.81097, "n": 4, "nd": 7.0, "reviews_known": 110, "score": 9.34, "rank": 3}, {"hood": "الربوة", "lat": 24.69005, "lng": 46.76693, "n": 6, "nd": 4.1, "reviews_known": 491, "score": 8.2, "rank": 4}, {"hood": "السويدي", "lat": 24.59835, "lng": 46.6961, "n": 3, "nd": 8.08, "reviews_known": 600, "score": 8.08, "rank": 5}, {"hood": "الخليج", "lat": 24.81555, "lng": 46.87802, "n": 2, "nd": 12.57, "reviews_known": null, "score": 6.0, "rank": 6}, {"hood": "عرقة", "lat": 24.67448, "lng": 46.62401, "n": 2, "nd": 7.83, "reviews_known": null, "score": 5.22, "rank": 7}, {"hood": "الحمراء", "lat": 24.76943, "lng": 46.76729, "n": 6, "nd": 2.54, "reviews_known": 2716, "score": 5.08, "rank": 8}, {"hood": "بدر", "lat": 24.54157, "lng": 46.69421, "n": 2, "nd": 7.48, "reviews_known": 972, "score": 4.99, "rank": 9}, {"hood": "شبرا", "lat": 24.57219, "lng": 46.6704, "n": 3, "nd": 4.66, "reviews_known": 2137, "score": 4.66, "rank": 10}, {"hood": "اشبيلية", "lat": 24.81247, "lng": 46.80419, "n": 2, "nd": 6.67, "reviews_known": 1604, "score": 4.45, "rank": 11}, {"hood": "النهضة", "lat": 24.75433, "lng": 46.82272, "n": 3, "nd": 3.83, "reviews_known": 3660, "score": 3.83, "rank": 12}, {"hood": "الياسمين", "lat": 24.81068, "lng": 46.66519, "n": 3, "nd": 3.12, "reviews_known": 2111, "score": 3.12, "rank": 13}, {"hood": "المونسية", "lat": 24.84283, "lng": 46.75265, "n": 2, "nd": 4.55, "reviews_known": 2438, "score": 3.03, "rank": 14}, {"hood": "المنصورة", "lat": 24.60416, "lng": 46.7325, "n": 1, "nd": 11.7, "reviews_known": null, "score": 3.0, "rank": 15}, {"hood": "المربع", "lat": 24.66391, "lng": 46.68321, "n": 1, "nd": 10.71, "reviews_known": null, "score": 3.0, "rank": 16}, {"hood": "الديرة", "lat": 24.62869, "lng": 46.71042, "n": 1, "nd": 11.16, "reviews_known": null, "score": 3.0, "rank": 17}, {"hood": "المنصورة", "lat": 24.58618, "lng": 46.75911, "n": 1, "nd": 13.76, "reviews_known": null, "score": 3.0, "rank": 18}, {"hood": "العليا", "lat": 24.67435, "lng": 46.66855, "n": 1, "nd": 9.09, "reviews_known": null, "score": 3.0, "rank": 19}, {"hood": "العزيزية", "lat": 24.61109, "lng": 46.70745, "n": 1, "nd": 9.78, "reviews_known": null, "score": 3.0, "rank": 20}, {"hood": "المربع", "lat": 24.64617, "lng": 46.7034, "n": 1, "nd": 11.68, "reviews_known": 1095, "score": 3.0, "rank": 21}, {"hood": "العريجاء", "lat": 24.63123, "lng": 46.56409, "n": 1, "nd": 9.58, "reviews_known": 883, "score": 3.0, "rank": 22}]}</script>
+<script type="application/json" id="data-jaririntel">{"layer": "jarir_intel", "basis": "Jarir opportunity = (branch count + reviews/3000) × service-gap(nd/3, cap 3x). Clusters = Jarir within 2km. Opportunities = nearest Drive7 >= 2.5km.", "params": {"cluster_km": 2.0, "min_gap_km": 2.5}, "generated_at": "2026-06-25", "sites": [{"hood": "العليا", "lat": 24.70181, "lng": 46.68069, "n": 1, "nd": 6.92, "reviews_known": 4412, "score": 5.7, "rank": 1}, {"hood": "النهضة", "lat": 24.75826, "lng": 46.83034, "n": 1, "nd": 4.71, "reviews_known": 5761, "score": 4.58, "rank": 2}, {"hood": "الديرة", "lat": 24.63237, "lng": 46.70711, "n": 1, "nd": 11.17, "reviews_known": 805, "score": 3.8, "rank": 3}, {"hood": "المنصورة", "lat": 24.59997, "lng": 46.7467, "n": 1, "nd": 12.9, "reviews_known": 513, "score": 3.51, "rank": 4}, {"hood": "الخليج", "lat": 24.79001, "lng": 46.80844, "n": 1, "nd": 6.52, "reviews_known": 1372, "score": 3.17, "rank": 5}, {"hood": "العارض", "lat": 24.87249, "lng": 46.63791, "n": 1, "nd": 7.01, "reviews_known": 1069, "score": 3.17, "rank": 6}, {"hood": "شبرا", "lat": 24.56935, "lng": 46.66234, "n": 1, "nd": 3.81, "reviews_known": 4308, "score": 3.09, "rank": 7}, {"hood": "السويدي", "lat": 24.60829, "lng": 46.65519, "n": 1, "nd": 5.68, "reviews_known": 1535, "score": 2.86, "rank": 8}, {"hood": "النرجس", "lat": 24.81789, "lng": 46.68606, "n": 1, "nd": 3.44, "reviews_known": 3125, "score": 2.34, "rank": 9}, {"hood": "الربوة", "lat": 24.69167, "lng": 46.76578, "n": 1, "nd": 3.97, "reviews_known": 2223, "score": 2.3, "rank": 10}, {"hood": "الملك فهد", "lat": 24.74472, "lng": 46.67952, "n": 1, "nd": 4.06, "reviews_known": 1653, "score": 2.1, "rank": 11}, {"hood": "حطين", "lat": 24.75198, "lng": 46.58395, "n": 1, "nd": 3.81, "reviews_known": 1729, "score": 2.0, "rank": 12}, {"hood": "الروضة", "lat": 24.73164, "lng": 46.75452, "n": 1, "nd": 2.65, "reviews_known": 717, "score": 1.09, "rank": 13}]}</script>
+<script type="application/json" id="data-extraintel">{"layer": "extra_intel", "basis": "eXtra opportunity = (branch count + reviews/5000) × service-gap(nd/3, cap 3x). Clusters=eXtra within 2.5km. Opportunities=nearest Drive7>=2.5km.", "params": {"cluster_km": 2.5, "min_gap_km": 2.5}, "generated_at": "2026-06-25", "sites": [{"hood": "العزيزية", "lat": 24.60512, "lng": 46.70545, "n": 1, "nd": 9.27, "reviews_known": 8611, "score": 8.17, "rank": 1}, {"hood": "حي الملك سلمان", "lat": 24.72826, "lng": 46.68989, "n": 1, "nd": 5.67, "reviews_known": 13997, "score": 7.19, "rank": 2}, {"hood": "الفاروق", "lat": 24.66315, "lng": 46.78605, "n": 1, "nd": 6.91, "reviews_known": 10386, "score": 7.09, "rank": 3}, {"hood": "بدر", "lat": 24.5484, "lng": 46.69675, "n": 1, "nd": 7.49, "reviews_known": 771, "score": 2.88, "rank": 4}, {"hood": "الرائد", "lat": 24.71294, "lng": 46.63303, "n": 1, "nd": 3.75, "reviews_known": 4847, "score": 2.46, "rank": 5}, {"hood": "الربيع", "lat": 24.80665, "lng": 46.66301, "n": 1, "nd": 2.89, "reviews_known": 6984, "score": 2.31, "rank": 6}, {"hood": "الغدير", "lat": 24.76682, "lng": 46.65902, "n": 1, "nd": 2.52, "reviews_known": 957, "score": 1.0, "rank": 7}]}</script>
+<script>
+"use strict";
+(function(){
+  // ---- 1. Parse data safely (independent of Leaflet/internet) ----
+  function parse(id){ try{ return JSON.parse(document.getElementById(id).textContent); }catch(e){ console.error('parse '+id,e); return null; } }
+  var bData = parse('data-branches')  || {branches:[]};
+  var cData = parse('data-competitors') || {competitors:[]};
+  var rData = parse('data-refbrands') || {brands:[]};
+  var sData = parse('data-suggested') || {sites:[]};
+  var dData = parse('data-density') || {sites:[]};
+  var siData = parse('data-sbintel') || {sites:[]};
+  var jiData = parse('data-jaririntel') || {sites:[]};
+  var eiData = parse('data-extraintel') || {sites:[]};
+  var branches = bData.branches || [];
+  var competitors = cData.competitors || [];
+  var refbrands = rData.brands || [];
+  var suggested = sData.sites || [];
+  var densitySites = dData.sites || [];
+  var sbIntel = siData.sites || [];
+  var jarirIntel = jiData.sites || [];
+  var extraIntel = eiData.sites || [];
+  var confirmed = branches.filter(function(b){return b.status==='confirmed';});
+  var verify    = branches.filter(function(b){return b.status!=='confirmed';});
+
+  // ---- 2. Number formatting (Arabic) ----
+  function fmt(n){
+    if(n>=1000000) return (n/1000000).toFixed(1).replace(/\.0$/,'')+' مليون';
+    if(n>=1000) return (n/1000).toFixed(1).replace(/\.0$/,'')+' ألف';
+    return String(n);
+  }
+  function setText(id,v){ var el=document.getElementById(id); if(el) el.textContent=v; }
+
+  // ---- 3. Fill ALL counters & stats FIRST (works with zero internet) ----
+  setText('ct-confirmed', fmt(confirmed.length));
+  setText('ct-verify', fmt(verify.length));
+  setText('ct-competitors', fmt(competitors.length));
+  setText('ct-starbucks', fmt(refbrands.filter(function(r){return r.brand==='ستاربكس';}).length));
+  setText('ct-jarir', fmt(refbrands.filter(function(r){return r.brand==='جرير';}).length));
+  setText('ct-extra', fmt(refbrands.filter(function(r){return r.brand==='إكسترا';}).length));
+  setText('ct-suggested', fmt(suggested.length));
+  setText('ct-density', fmt(densitySites.length));
+  setText('ct-sbintel', fmt(sbIntel.length));
+  setText('ct-jaririntel', fmt(jarirIntel.length));
+  setText('ct-extraintel', fmt(extraIntel.length));
+
+  // Jarir-intel ranked list
+  (function(){
+    var box=document.getElementById('jri-list'); if(!box) return;
+    jarirIntel.forEach(function(s){
+      var div=document.createElement('div'); div.className='sugg';
+      div.style.background='#eef5fd'; div.style.borderColor='#bcd6f5';
+      div.innerHTML='<span class="rk" style="background:#1469c7">'+s.rank+'</span><div class="info">'+
+        '<div class="h">'+s.hood+'</div>'+
+        '<div class="m">جرير: '+s.n+' فرع'+(s.reviews_known?(' · '+fmt(s.reviews_known)+' مراجعة'):'')+' · أقرب درايف7: '+s.nd+' كم</div>'+
+        '</div><span class="sc" style="color:#1469c7">'+s.score+'</span>';
+      box.appendChild(div);
+    });
+  })();
+
+  // eXtra-intel ranked list
+  (function(){
+    var box=document.getElementById('eri-list'); if(!box) return;
+    extraIntel.forEach(function(s){
+      var div=document.createElement('div'); div.className='sugg';
+      div.style.background='#fffaf0'; div.style.borderColor='#f3e0b0';
+      div.innerHTML='<span class="rk" style="background:#d99100">'+s.rank+'</span><div class="info">'+
+        '<div class="h">'+s.hood+'</div>'+
+        '<div class="m">إكسترا: '+s.n+' فرع'+(s.reviews_known?(' · '+fmt(s.reviews_known)+' مراجعة'):'')+' · أقرب درايف7: '+s.nd+' كم</div>'+
+        '</div><span class="sc" style="color:#d99100">'+s.score+'</span>';
+      box.appendChild(div);
+    });
+  })();
+
+  // Starbucks-intel ranked list (research view)
+  (function(){
+    var box=document.getElementById('sbi-list'); if(!box) return;
+    sbIntel.forEach(function(s){
+      var div=document.createElement('div'); div.className='sugg';
+      div.style.background='#f0faf5'; div.style.borderColor='#bfe6d2';
+      div.innerHTML='<span class="rk" style="background:#0a8043">'+s.rank+'</span><div class="info">'+
+        '<div class="h">'+s.hood+'</div>'+
+        '<div class="m">بقعة ستاربكس: '+s.n+' فرع'+(s.reviews_known?(' · '+fmt(s.reviews_known)+' مراجعة'):'')+' · أقرب درايف7: '+s.nd+' كم</div>'+
+        '</div><span class="sc" style="color:#0a8043">'+s.score+'</span>';
+      box.appendChild(div);
+    });
+  })();
+
+  function brandsLine(b){ return Object.keys(b).map(function(k){return k+'×'+b[k];}).join(' · '); }
+  // Ranked list: by reviews (demand)
+  (function(){
+    var box=document.getElementById('sugg-list'); if(!box) return;
+    suggested.forEach(function(s){
+      var div=document.createElement('div'); div.className='sugg';
+      div.innerHTML='<span class="rk">'+s.rank+'</span><div class="info">'+
+        '<div class="h">'+s.hood+'</div>'+
+        '<div class="m">طلب: '+fmt(s.demand)+' مراجعة · '+brandsLine(s.brands)+' · أقرب درايف7: '+s.nd+' كم</div>'+
+        '</div><span class="sc">'+s.score+'</span>';
+      box.appendChild(div);
+    });
+  })();
+  // Ranked list: by branch count (presence)
+  (function(){
+    var box=document.getElementById('dens-list'); if(!box) return;
+    densitySites.forEach(function(s){
+      var div=document.createElement('div'); div.className='sugg';
+      div.style.background='#fff8f0'; div.style.borderColor='#f6d3a8';
+      div.innerHTML='<span class="rk" style="background:#f4810a">'+s.rank+'</span><div class="info">'+
+        '<div class="h">'+s.hood+'</div>'+
+        '<div class="m">عدد الفروع: '+s.count+' · '+brandsLine(s.brands)+' · أقرب درايف7: '+s.nd+' كم</div>'+
+        '</div><span class="sc" style="color:#f4810a">'+s.count+'</span>';
+      box.appendChild(div);
+    });
+  })();
+
+  setText('s-total', fmt(confirmed.length));
+  setText('s-ryd', fmt(confirmed.filter(function(b){return b.city==='الرياض';}).length));
+  setText('s-jed', fmt(confirmed.filter(function(b){return b.city==='جدة';}).length));
+  setText('s-bur', fmt(confirmed.filter(function(b){return b.city==='بريدة';}).length));
+  if(confirmed.length){
+    setText('s-rate', (confirmed.reduce(function(s,b){return s+b.rating;},0)/confirmed.length).toFixed(2)+' / 5');
+    setText('s-rev', fmt(confirmed.reduce(function(s,b){return s+b.reviews;},0)));
+  }
+  if(competitors.length){
+    setText('cmp-total', fmt(competitors.length));
+    setText('cmp-rate', (competitors.reduce(function(s,c){return s+c.rating;},0)/competitors.length).toFixed(2)+' / 5');
+    setText('cmp-rev', fmt(competitors.reduce(function(s,c){return s+c.reviews;},0)));
+    var top=competitors.reduce(function(a,b){return b.reviews>a.reviews?b:a;});
+    setText('cmp-top', top.title.split('|')[0].split('(')[0].slice(0,22));
+  }
+  if(refbrands.length){
+    var byBrand=function(n){return refbrands.filter(function(r){return r.brand===n;});};
+    setText('rb-j', fmt(byBrand('جرير').length));
+    setText('rb-e', fmt(byBrand('إكسترا').length));
+    setText('rb-s', fmt(byBrand('ستاربكس').length));
+    setText('rb-rev', fmt(refbrands.reduce(function(s,r){return s+r.reviews;},0)));
+    var hoodCount={};
+    refbrands.forEach(function(r){ hoodCount[r.neighborhood]=(hoodCount[r.neighborhood]||0)+1; });
+    var topHood='—',topN=0;
+    Object.keys(hoodCount).forEach(function(h){ if(hoodCount[h]>topN){topN=hoodCount[h];topHood=h;} });
+    setText('rb-top', topHood+' ('+topN+')');
+  }
+
+  // ---- 4. Layer toggles work WITHOUT a map (visual state always responds) ----
+  var hasMap = (typeof L !== 'undefined');
+  var map=null, layers={}, colors={confirmed:'#e63946',verify:'#d98a04',competitors:'#5b6cff',refbrands:'#2a9d8f'};
+
+  function buildMap(){
+    map = L.map('map',{zoomControl:true}).setView([24.74,46.72],11);
+    var carto=L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+      {attribution:'&copy; OSM &copy; CARTO',subdomains:'abcd',maxZoom:19});
+    var osm=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OSM',maxZoom:19});
+    var swapped=false; carto.on('tileerror',function(){ if(!swapped){swapped=true;map.removeLayer(carto);osm.addTo(map);} });
+    carto.addTo(map);
+
+    layers.confirmed=L.layerGroup(); layers.verify=L.layerGroup(); layers.competitors=L.layerGroup();
+    layers.starbucks=L.layerGroup(); layers.jarir=L.layerGroup(); layers.extra=L.layerGroup();
+    layers.suggested=L.layerGroup();
+    layers.density=L.layerGroup();
+    layers.sbintel=L.layerGroup();
+    layers.jaririntel=L.layerGroup();
+    layers.extraintel=L.layerGroup();
+    function exIcon(rank){
+      var html='<div style="position:relative;width:32px;height:32px">'+
+        '<div style="position:absolute;inset:0;border-radius:50%;background:#f2b417;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.5)"></div>'+
+        '<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#1a2330;font-weight:700;font-size:12px">'+rank+'</span></div>';
+      return L.divIcon({className:'',html:html,iconSize:[32,32],iconAnchor:[16,16],popupAnchor:[0,-16]});
+    }
+    function jrIcon(rank){
+      var html='<div style="position:relative;width:32px;height:32px">'+
+        '<div style="position:absolute;inset:0;border-radius:50%;background:#1469c7;border:3px solid #fff;'+
+        'box-shadow:0 1px 5px rgba(0,0,0,.5)"></div>'+
+        '<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;'+
+        'color:#fff;font-weight:700;font-size:12px">'+rank+'</span></div>';
+      return L.divIcon({className:'',html:html,iconSize:[32,32],iconAnchor:[16,16],popupAnchor:[0,-16]});
+    }
+    function sbIcon(rank){
+      var html='<div style="position:relative;width:32px;height:32px">'+
+        '<div style="position:absolute;inset:0;border-radius:50%;background:#0a8043;border:3px solid #fff;'+
+        'box-shadow:0 1px 5px rgba(0,0,0,.5)"></div>'+
+        '<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;'+
+        'color:#fff;font-weight:700;font-size:11px">☕'+rank+'</span></div>';
+      return L.divIcon({className:'',html:html,iconSize:[32,32],iconAnchor:[16,16],popupAnchor:[0,-16]});
+    }
+    function diamondIcon(rank){
+      var html='<div style="position:relative;width:30px;height:30px">'+
+        '<div style="position:absolute;inset:3px;background:#f4810a;border:2px solid #fff;'+
+        'transform:rotate(45deg);box-shadow:0 1px 4px rgba(0,0,0,.5)"></div>'+
+        '<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;'+
+        'color:#fff;font-weight:700;font-size:12px">'+rank+'</span></div>';
+      return L.divIcon({className:'',html:html,iconSize:[30,30],iconAnchor:[15,15],popupAnchor:[0,-15]});
+    }
+    function starIcon(rank){
+      var html='<div style="position:relative;width:34px;height:34px">'+
+        '<svg viewBox="0 0 24 24" width="34" height="34" style="filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))">'+
+        '<path d="M12 2l2.9 6.3 6.9.6-5.2 4.5 1.6 6.7L12 17.3 5.8 20.6l1.6-6.7L2.2 8.9l6.9-.6z" '+
+        'fill="#e63946" stroke="#fff" stroke-width="1.2"/></svg>'+
+        '<span style="position:absolute;inset:0;top:1px;display:flex;align-items:center;justify-content:center;'+
+        'color:#fff;font-weight:700;font-size:11px">'+rank+'</span></div>';
+      return L.divIcon({className:'',html:html,iconSize:[34,34],iconAnchor:[17,17],popupAnchor:[0,-17]});
+    }
+    function pin(color){return L.divIcon({className:'',html:'<div style="width:20px;height:20px;border-radius:50% 50% 50% 0;background:'+color+';transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4)"></div>',iconSize:[20,20],iconAnchor:[10,20],popupAnchor:[0,-20]});}
+    // Competitors: distinct PURPLE SQUARE so they never get confused with reference brands
+    function sq(color){return L.divIcon({className:'',html:'<div style="width:12px;height:12px;background:'+color+';border:2px solid #fff;border-radius:3px;box-shadow:0 1px 4px rgba(0,0,0,.35)"></div>',iconSize:[12,12],iconAnchor:[6,6],popupAnchor:[0,-6]});}
+    // Reference brands: clean inline icon (no external image) — colored circle + glyph. Each brand distinct.
+    var brandMeta={
+      'ستاربكس':{color:'#0a8043',glyph:'★'},
+      'جرير':{color:'#1469c7',glyph:'ج'},
+      'إكسترا':{color:'#f2b417',glyph:'X'}
+    };
+    function brandIcon(brand){
+      var m=brandMeta[brand]||{color:'#888',glyph:'?'};
+      var txtColor = (brand==='إكسترا') ? '#1a2330' : '#fff';
+      var html='<div style="width:24px;height:24px;border-radius:50%;background:'+m.color+';color:'+txtColor+';'+
+        'display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;line-height:1;'+
+        'font-family:\'IBM Plex Sans Arabic\',sans-serif;border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.35)">'+m.glyph+'</div>';
+      return L.divIcon({className:'',html:html,iconSize:[24,24],iconAnchor:[12,12],popupAnchor:[0,-12]});
+    }
+    function gmaps(id){return 'https://www.google.com/maps/place/?q=place_id:'+id;}
+
+    confirmed.concat(verify).forEach(function(b){
+      var key=b.status==='confirmed'?'confirmed':'verify';
+      L.marker([b.lat,b.lng],{icon:pin(colors[key])}).bindPopup(
+        '<div class="pop"><h3>'+b.title+'</h3>'+
+        '<div class="row">المدينة: <b>'+b.city+'</b> · الحي: <b>'+(b.neighborhood||'—')+'</b></div>'+
+        '<div class="row">التقييم: <span class="rate">★ '+b.rating+'</span> · المراجعات: <b>'+fmt(b.reviews)+'</b></div>'+
+        '<a href="'+gmaps(b.placeId)+'" target="_blank">فتح في خرائط Google ↗</a></div>'
+      ).addTo(layers[key]);
+    });
+    competitors.forEach(function(c){
+      L.marker([c.lat,c.lng],{icon:sq('#7b3ff2')}).bindPopup(
+        '<div class="pop"><h3>'+c.title+'</h3>'+
+        '<div class="row">الحي: <b>'+(c.neighborhood||'—')+'</b> · الرياض</div>'+
+        '<div class="row">الخدمة: <b>'+(c.service||'—')+'</b></div>'+
+        '<div class="row">التقييم: <span class="rate">★ '+c.rating+'</span> · المراجعات: <b>'+fmt(c.reviews)+'</b></div>'+
+        '<a href="'+gmaps(c.placeId)+'" target="_blank">فتح في خرائط Google ↗</a></div>'
+      ).addTo(layers.competitors);
+    });
+
+    var brandLayer={'ستاربكس':'starbucks','جرير':'jarir','إكسترا':'extra'};
+    refbrands.forEach(function(r){
+      var lk=brandLayer[r.brand]; if(!lk) return;
+      var rateRow = (r.rating? '<span class="rate">★ '+r.rating+'</span> · ':'') +
+                    'المراجعات: <b>'+(r.reviews? fmt(r.reviews) : 'غير متوفرة')+'</b>';
+      var link = r.placeId
+        ? '<a href="'+gmaps(r.placeId)+'" target="_blank">فتح في خرائط Google ↗</a>'
+        : '<a href="https://www.google.com/maps/search/'+encodeURIComponent(r.brand)+'/@'+r.lat+','+r.lng+',17z" target="_blank">عرض أقرب '+r.brand+' هنا ↗</a>';
+      L.marker([r.lat,r.lng],{icon:brandIcon(r.brand)}).bindPopup(
+        '<div class="pop"><h3>'+r.title+'</h3>'+
+        '<div class="row">العلامة: <b>'+r.brand+'</b> · الحي: <b>'+(r.neighborhood||'—')+'</b></div>'+
+        '<div class="row">'+rateRow+'</div>'+link+'</div>'
+      ).addTo(layers[lk]);
+    });
+
+    function brandsLine2(b){ return Object.keys(b).map(function(k){return k+'×'+b[k];}).join(' · '); }
+    suggested.forEach(function(s){
+      L.marker([s.lat,s.lng],{icon:starIcon(s.rank),zIndexOffset:1000}).bindPopup(
+        '<div class="pop"><h3>★ موقع مقترح #'+s.rank+' — '+s.hood+'</h3>'+
+        '<div class="row">درجة الأولوية: <b style="color:#e63946">'+s.score+'</b></div>'+
+        '<div class="row">قوة الطلب: <b>'+fmt(s.demand)+'</b> مراجعة من العلامات القوية</div>'+
+        '<div class="row">العلامات القريبة: <b>'+brandsLine2(s.brands)+'</b></div>'+
+        '<div class="row">أقرب فرع درايف7: <b>'+s.nd+' كم</b> (منطقة غير مخدومة)</div>'+
+        '<div class="row" style="margin-top:5px;color:#e63946">السبب: تركّز علامات عالية المراجعات بلا تغطية درايف7 قريبة.</div>'+
+        '</div>'
+      ).addTo(layers.suggested);
+    });
+
+    densitySites.forEach(function(s){
+      L.marker([s.lat,s.lng],{icon:diamondIcon(s.rank),zIndexOffset:900}).bindPopup(
+        '<div class="pop"><h3>◆ مقترح (عدد فروع) #'+s.rank+' — '+s.hood+'</h3>'+
+        '<div class="row">عدد فروع العلامات: <b style="color:#f4810a">'+s.count+'</b></div>'+
+        '<div class="row">التوزيع: <b>'+brandsLine2(s.brands)+'</b></div>'+
+        '<div class="row">أقرب فرع درايف7: <b>'+s.nd+' كم</b> (منطقة غير مخدومة)</div>'+
+        '<div class="row" style="margin-top:5px;color:#f4810a">السبب: أعلى تواجد لفروع العلامات الثلاث بلا تغطية درايف7 قريبة.</div>'+
+        '</div>'
+      ).addTo(layers.density);
+    });
+
+    layers.confirmed.addTo(map);
+    layers.competitors.addTo(map);
+    sbIntel.forEach(function(s){
+      L.marker([s.lat,s.lng],{icon:sbIcon(s.rank),zIndexOffset:1100}).bindPopup(
+        '<div class="pop"><h3>☕ بقعة ستاربكس #'+s.rank+' — '+s.hood+'</h3>'+
+        '<div class="row">درجة الكثافة: <b style="color:#0a8043">'+s.score+'</b></div>'+
+        '<div class="row">عدد فروع ستاربكس في البقعة: <b>'+s.n+'</b></div>'+
+        (s.reviews_known?'<div class="row">مراجعات معروفة (جزئية): <b>'+fmt(s.reviews_known)+'</b></div>':'')+
+        '<div class="row">أقرب فرع درايف7: <b>'+s.nd+' كم</b> (فجوة خدمة)</div>'+
+        '<div class="row" style="margin-top:5px;color:#0a8043">القراءة: تركّز عالٍ لستاربكس هنا ودرايف7 بعيد — فرصة توسّع.</div>'+
+        '</div>'
+      ).addTo(layers.sbintel);
+    });
+    jarirIntel.forEach(function(s){
+      L.marker([s.lat,s.lng],{icon:jrIcon(s.rank),zIndexOffset:1050}).bindPopup(
+        '<div class="pop"><h3>مقترح (جرير) #'+s.rank+' — '+s.hood+'</h3>'+
+        '<div class="row">درجة الفرصة: <b style="color:#1469c7">'+s.score+'</b></div>'+
+        '<div class="row">فروع جرير في البقعة: <b>'+s.n+'</b></div>'+
+        (s.reviews_known?'<div class="row">مراجعات جرير: <b>'+fmt(s.reviews_known)+'</b></div>':'')+
+        '<div class="row">أقرب فرع درايف7: <b>'+s.nd+' كم</b> (فجوة خدمة)</div>'+
+        '<div class="row" style="margin-top:5px;color:#1469c7">القراءة: جرير اختار هذه المنطقة (نشاط تجاري) ودرايف7 بعيد — فرصة توسّع.</div>'+
+        '</div>'
+      ).addTo(layers.jaririntel);
+    });
+    extraIntel.forEach(function(s){
+      L.marker([s.lat,s.lng],{icon:exIcon(s.rank),zIndexOffset:1040}).bindPopup(
+        '<div class="pop"><h3>مقترح (إكسترا) #'+s.rank+' — '+s.hood+'</h3>'+
+        '<div class="row">درجة الفرصة: <b style="color:#d99100">'+s.score+'</b></div>'+
+        '<div class="row">فروع إكسترا في البقعة: <b>'+s.n+'</b></div>'+
+        (s.reviews_known?'<div class="row">مراجعات إكسترا: <b>'+fmt(s.reviews_known)+'</b></div>':'')+
+        '<div class="row">أقرب فرع درايف7: <b>'+s.nd+' كم</b> (فجوة خدمة)</div>'+
+        '<div class="row" style="margin-top:5px;color:#d99100">القراءة: إكسترا اختار هذه المنطقة ودرايف7 بعيد — فرصة توسّع.</div>'+
+        '</div>'
+      ).addTo(layers.extraintel);
+    });
+
+    layers.starbucks.addTo(map); layers.jarir.addTo(map); layers.extra.addTo(map);
+    layers.suggested.addTo(map);
+    layers.density.addTo(map);
+    layers.sbintel.addTo(map);
+    layers.jaririntel.addTo(map);
+    layers.extraintel.addTo(map);
+    function fix(){ try{map.invalidateSize();}catch(e){} }
+    setTimeout(fix,300); window.addEventListener('resize',fix);
+  }
+
+  if(hasMap){
+    try{ buildMap(); }catch(e){ console.error(e); document.getElementById('map-msg').style.display='flex'; }
+  }else{
+    document.getElementById('map-msg').style.display='flex';
+  }
+
+  // Toggle handler: always updates the visual switch; toggles map layer when map exists.
+  document.querySelectorAll('.layer').forEach(function(el){
+    el.addEventListener('click',function(){
+      var k=el.getAttribute('data-layer');
+      el.classList.toggle('off');
+      if(map && layers[k]){
+        if(el.classList.contains('off')) map.removeLayer(layers[k]);
+        else layers[k].addTo(map);
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>
