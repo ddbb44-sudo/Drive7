@@ -65,6 +65,26 @@
   .sugg .h{font-size:13px;font-weight:600;}
   .sugg .m{font-size:11px;color:var(--muted);}
   .sugg .sc{font-size:13px;font-weight:700;color:var(--brand);}
+
+  /* ===== الجوال والآيباد فقط — لا تأثير على الديسكتوب ===== */
+  @media (max-width:1024px){
+    html,body{height:auto;}
+    #app{flex-direction:column;height:auto;min-height:100vh;overflow:visible;}
+    /* الخريطة في الأعلى بارتفاع ثابت مريح */
+    #mapwrap{order:-1;flex:none;width:100%;height:62vh;min-height:340px;}
+    #map{position:absolute;inset:0;}
+    /* القائمة الجانبية تصبح أسفل الخريطة وتُمرَّر مع الصفحة */
+    #sidebar{width:100%;min-width:0;max-width:100%;height:auto;overflow-y:visible;
+      border-inline-end:none;border-top:1px solid var(--line);box-shadow:none;}
+  }
+  @media (max-width:560px){
+    #mapwrap{height:55vh;min-height:300px;}
+    .brandbar h1{font-size:18px;}
+    .section{padding:13px 15px;}
+    .layer{padding:11px 12px;}
+    .layer .nm{font-size:13px;}
+    .pop h3{font-size:13px;}
+  }
 </style>
 </head>
 <body>
