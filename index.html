@@ -31,8 +31,9 @@
   .brandbar p{margin:4px 0 0;font-size:12px;color:var(--muted);}
   .section{padding:14px 18px;border-bottom:1px solid var(--line);}
   .section h2{margin:0 0 10px;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.4px;}
-  .layer{display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:8px;
+  .layer{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:10px 12px;margin-bottom:8px;
     background:var(--panel2);border:1px solid var(--line);border-radius:10px;cursor:pointer;transition:.15s;}
+  .layer .desc{flex-basis:100%;font-size:11px;line-height:1.5;color:var(--muted);font-weight:400;margin-top:2px;}
   .layer:hover{border-color:#c2d0e4;box-shadow:0 2px 8px rgba(20,40,80,.06);}
   .layer.off{opacity:.5;}
   .layer .dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
@@ -108,18 +109,21 @@
       </div>
       <div class="layer" data-layer="suggested" style="border-color:#e63946;background:#fff5f5">
         <span class="dot" style="background:#e63946;border-radius:0;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)"></span>
-        <span class="nm" style="font-weight:700">★ مقترح حسب المراجعات</span>
+        <span class="nm" style="font-weight:700">★ بقع الطلب العالي (حسب المراجعات)</span>
         <span class="ct" id="ct-suggested">0</span><span class="sw"></span>
+        <span class="desc">مواقع تتركّز فيها متاجر (ستاربكس/جرير/إكسترا) ذات مراجعات مرتفعة = طلب عالٍ.<br>ولا يوجد فرع درايف7 قريب منها — أي فرصة بيع مهدورة.</span>
       </div>
       <div class="layer" data-layer="density" style="border-color:#f4810a;background:#fff8f0">
         <span class="dot" style="background:#f4810a;border-radius:2px;transform:rotate(45deg)"></span>
-        <span class="nm" style="font-weight:700">◆ مقترح حسب عدد الفروع</span>
+        <span class="nm" style="font-weight:700">◆ بقع كثافة الفروع (تواجد العلامات)</span>
         <span class="ct" id="ct-density">0</span><span class="sw"></span>
+        <span class="desc">مواقع يتجمّع فيها أكبر عدد من فروع العلامات الثلاث (ستاربكس/جرير/إكسترا) بغضّ النظر عن المراجعات.<br>ولا يوجد فرع درايف7 قريب منها — مؤشّر على منطقة تجارية نشطة غير مخدومة.</span>
       </div>
       <div class="layer" data-layer="sbintel" style="border-color:#0a8043;background:#f0faf5">
         <span class="dot" style="background:#fff;border:3px solid #0a8043;border-radius:50%"></span>
-        <span class="nm" style="font-weight:700">☕ تحليل ستاربكس الذكي</span>
+        <span class="nm" style="font-weight:700">☕ مقترح بناءً على مواقع ستاربكس</span>
         <span class="ct" id="ct-sbintel">0</span><span class="sw"></span>
+        <span class="desc">نجمّع فروع ستاربكس المتقاربة في بقعة واحدة، ودرجة الفرصة = عدد الفروع × بُعد أقرب درايف7.<br>كلما كثُرت فروع ستاربكس وبَعُد درايف7، زادت جاذبية الموقع لفرع جديد.</span>
       </div>
       <div class="layer" data-layer="jaririntel" style="border-color:#1469c7;background:#eef5fd">
         <span class="dot" style="background:#fff;border:3px solid #1469c7;border-radius:50%"></span>
